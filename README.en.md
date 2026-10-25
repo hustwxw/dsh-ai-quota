@@ -18,6 +18,10 @@ The sidebar row appends the remaining quota to the name — click the icon to re
 
 ![Sidebar row](docs/sidebar.png)
 
+Call log: server-side paging (20 / 50 / 100 per page), in-page search over model name and request ID, click a row for every field:
+
+![Call log](docs/call-log.png)
+
 ## Display name
 
 The sidebar row and the panel title share one configurable name, `AI Quota` by default:
