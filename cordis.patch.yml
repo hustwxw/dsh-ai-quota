@@ -1,0 +1,3 @@
+- insert:
+    - id: ai-quota-panel
+      name: '@local/dsh-ai-quota'
