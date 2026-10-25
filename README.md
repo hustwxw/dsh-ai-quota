@@ -80,6 +80,20 @@ plugin_manager  install_bundle  target = <克隆下来的绝对路径>
 
 开发时改动 `client.js` 后刷新页面即可生效；改动 `index.js`（Host 半）需要重启 Harness。装了依赖的 pnpm store 里 React 18 时，`npm test` 里的渲染测试才会真正跑，否则自动 SKIP。
 
+### 让别的 agent 自己装
+
+这个仓库对 agent 是自描述的：`package.json` 的 `dsh.bundle.patch` / `dsh.client` 说明它是 DSH bundle，`README` 给了全部步骤。把下面这段直接丢给另一台机器上的 agent：
+
+```text
+把 https://github.com/hustwxw/dsh-ai-quota 克隆到本地任意目录（例如 ~/dsh-ai-quota），
+再用 DSH 的 plugin_manager 执行 install_bundle，target 填该目录的绝对路径；
+启用后刷新 Web UI，侧边栏出现「AI 额度」图标即安装成功。
+不要直接拿仓库 URL 当 target：这个包没有发布到 npm，按包名也找不到。
+装完打开面板 → 连接设置，填你自己的网关地址与 skey。
+```
+
+前置条件只有两条：目标机器装了 DSH 且 Web UI 可用；能访问你自己的 New API 网关（内网 / VPN）。另外注意 `install_bundle` 的 target 是**本地目录路径**（本机安装就是这种方式），不是仓库地址。
+
 ## 配置
 
 1. 侧边栏 → AI 额度 → 连接设置。

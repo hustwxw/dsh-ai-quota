@@ -80,6 +80,22 @@ Refresh the Web UI: an **AI Quota** icon appears in the sidebar panel list, afte
 
 During development a change to `client.js` takes effect on a page refresh; a change to `index.js` (the Host half) needs a Harness restart. The render test only really runs when React 18 is resolvable (see below), otherwise it reports SKIPPED.
 
+### Letting another agent install it
+
+The repository is self-describing for an agent: `dsh.bundle.patch` and `dsh.client` in `package.json` mark it as a DSH bundle, and this README carries every step. Hand the block below to an agent on the target machine:
+
+```text
+Clone https://github.com/hustwxw/dsh-ai-quota into any local directory
+(e.g. ~/dsh-ai-quota), then run DSH's plugin_manager install_bundle with
+target set to that directory's absolute path; enable the bundle and refresh
+the Web UI — an "AI Quota" icon in the sidebar means it worked.
+Do not pass the repository URL as target: this package is not published to
+npm and cannot be found by name either.
+Then open the panel → Connection and fill in your own gateway address and skey.
+```
+
+Only two prerequisites: DSH with a working Web UI on the target machine, and reachability of your own New API gateway (intranet / VPN). Note that `install_bundle` takes a **local directory path** (the way this machine installs it), not a repository URL.
+
 ## Configuration
 
 1. Sidebar → AI Quota → Connection.
