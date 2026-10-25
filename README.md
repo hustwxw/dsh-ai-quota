@@ -1,5 +1,7 @@
 # dsh-ai-quota
 
+[English](README.en.md) | **中文**
+
 AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
 
 把公司 AI 额度网关（基于 [New API](https://github.com/Calcium-Ion/new-api)）做成 Harness Web UI 里的常驻面板：侧边栏那一行直接显示剩余额度百分比，点图标即刷新；点进去可以看额度概览、模型限制、分页调用记录、模型计费，以及按时间范围做的调用分析与钻取。
