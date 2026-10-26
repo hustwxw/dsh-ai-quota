@@ -92,17 +92,32 @@ During development a change to `client.js` takes effect on a page refresh; a cha
 
 ### Letting another agent install it
 
-Both the repository and the npm package are self-describing for an agent: `dsh.bundle.patch` and `dsh.client` in `package.json` mark it as a DSH bundle, and this README carries every step. Hand the block below to an agent on the target machine:
+Both the repository and the npm package are self-describing for an agent: `dsh.bundle.patch` and `dsh.client` in `package.json` mark it as a DSH bundle, and this README carries every step.
+
+**Copy the whole block below into a DSH on the target machine; it installs itself:**
 
 ```text
-Run DSH's plugin_manager install_bundle with target set to dsh-ai-quota (the npm
-package name); enable the bundle and refresh the Web UI — an "AI Quota" icon in
-the sidebar means it worked.
-Then open the panel → Connection and fill in your own gateway address and skey.
-Only clone https://github.com/hustwxw/dsh-ai-quota when you need to change code.
+Install a DSH plugin for me: "AI Quota" panel (npm package dsh-ai-quota,
+repository https://github.com/hustwxw/dsh-ai-quota).
+
+Please do this in order:
+1. Call plugin_manager install_bundle with target = dsh-ai-quota, and enable it.
+2. If you get ERR_PNPM_FETCH_404 or the package is not found, retry with
+   registry = https://registry.npmjs.org.
+   Do not install 0.0.0-stage — that is npm's empty placeholder stub;
+   install latest (currently 0.3.2).
+3. Ask me to refresh the Web UI, then confirm an "AI Quota" icon shows up in the
+   sidebar (below Plugins / Scheduled tasks). You can also verify with
+   cordis_inspect_query on the main slot: a key = ai-quota-panel entry.
+4. Then tell me what to fill in.
+
+Do not touch my credentials afterwards: I will enter the gateway address and
+skey myself under Connection.
 ```
 
 Only two prerequisites: DSH with a working Web UI on the target machine, and reachability of your own New API gateway (intranet / VPN).
+
+If npm is not an option (intranet, mirror lag, a CDN-cached 404), fall back to source: `git clone https://github.com/hustwxw/dsh-ai-quota` and point `install_bundle`'s target at that directory's absolute path.
 
 npm page: <https://www.npmjs.com/package/dsh-ai-quota>
 

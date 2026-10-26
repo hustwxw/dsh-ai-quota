@@ -90,16 +90,27 @@ plugin_manager  install_bundle  target = <克隆目录的绝对路径>
 
 ### 让别的 agent 自己装
 
-这个仓库和 npm 包对 agent 都是自描述的：`package.json` 的 `dsh.bundle.patch` / `dsh.client` 说明它是 DSH bundle，`README` 给了全部步骤。把下面这段直接丢给另一台机器上的 agent：
+这个仓库和 npm 包对 agent 都是自描述的：`package.json` 的 `dsh.bundle.patch` / `dsh.client` 说明它是 DSH bundle，`README` 给了全部步骤。
+
+**把下面整段复制给另一台机器上的 DSH，它会自己装好：**
 
 ```text
-用 DSH 的 plugin_manager 执行 install_bundle，target 填 dsh-ai-quota（npm 包名），
-启用后刷新 Web UI，侧边栏出现「AI 额度」图标即安装成功。
-然后打开面板 → 连接设置，填你自己的网关地址与 skey。
-只有需要改代码时才 git clone https://github.com/hustwxw/dsh-ai-quota 并按目录安装。
+帮我装一个 DSH 插件：AI 额度面板（npm 包名 dsh-ai-quota，仓库 https://github.com/hustwxw/dsh-ai-quota）。
+
+请按顺序做：
+1. 用 plugin_manager 的 install_bundle，target 传 dsh-ai-quota，并启用它。
+2. 如果报 ERR_PNPM_FETCH_404 或找不到包，带上 registry = https://registry.npmjs.org 再试一次。
+   注意：不要安装 0.0.0-stage 这个版本，那是 npm 的空壳占位包；要装 latest（当前 0.3.2）。
+3. 装完让我刷新 Web UI，确认侧边栏出现「AI 额度」图标（在「插件 / 自动化任务」下面）；
+   也可以用 cordis_inspect_query 查 main 槽位里有没有 key = ai-quota-panel 的项来确定。
+4. 然后告诉我下一步怎么填配置。
+
+装好之后不要动我的凭据：网关地址和 skey 我自己在面板的「连接设置」里填。
 ```
 
 前置条件只有两条：目标机器装了 DSH 且 Web UI 可用；能访问你自己的 New API 网关（内网 / VPN）。
+
+如果 npm 那条路走不通（内网、镜像没同步、CDN 缓存 404），退回源码安装：`git clone https://github.com/hustwxw/dsh-ai-quota`，再把 `install_bundle` 的 target 设成克隆目录的绝对路径。
 
 npm 包主页：<https://www.npmjs.com/package/dsh-ai-quota>
 
