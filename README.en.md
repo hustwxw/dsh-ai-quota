@@ -4,6 +4,54 @@
 
 An AI quota panel — a Cordis plugin for **DeepSeek Harness (DSH)**.
 
+---
+
+## ⚡ One-paste install: hand the block below to your DSH
+
+> **No clone, no hand-typed commands.** This prompt already carries the install command, the mirror
+> fallback, the version trap and the verification step; the receiving DSH installs it and reports back.
+> **Just sending the link and letting it guess usually ends in a wrong version or a 404.**
+
+```text
+You are DSH. Install a plugin for me and verify it actually works — do not just
+hand me instructions.
+
+Plugin: "AI Quota" panel (npm package dsh-ai-quota,
+repository https://github.com/hustwxw/dsh-ai-quota)
+
+Do this, in order:
+1) Call plugin_manager with action = install_bundle and target = dsh-ai-quota;
+   afterwards confirm it is enabled = true.
+2) If you get ERR_PNPM_FETCH_404 / not-found / package does not exist:
+   - first retry with registry = https://registry.npmjs.org (domestic mirrors lag
+     a few minutes behind for a freshly published package);
+   - if that still fails, git clone https://github.com/hustwxw/dsh-ai-quota and
+     reinstall with target set to that directory's absolute path.
+   - Never install 0.0.0-stage: it is npm's auto-created empty placeholder stub
+     and nothing will show up in the sidebar. You want latest (currently 0.3.3).
+3) Then ask me to refresh the Web UI, and confirm an "AI Quota" icon appears in
+   the sidebar (right after Plugins / Scheduled tasks). You can verify with
+   cordis_inspect_query (platform = client, provider = Slots, method =
+   listSubTree, root = main): look for an entry with key = ai-quota-panel.
+4) Report three things to me: the version actually installed, whether the sidebar
+   icon appeared, and what I need to fill in next.
+
+Hard rule: do not read, do not ask for, and do not type in my skey or gateway
+address — I enter those myself under the panel's Connection tab. The skey belongs
+only in my local credential store.
+```
+
+The only thing the other side has to do afterwards: **panel → Connection → enter the gateway address and skey** (the default address is a placeholder; without it the panel just says "not configured").
+
+| Common failure | Fix |
+| --- | --- |
+| `ERR_PNPM_FETCH_404` / package not found | retry with `registry = https://registry.npmjs.org`, or fall back to clone + directory install |
+| Installed but no sidebar icon | refresh the Web UI; if it is still missing, check the bundle is enabled |
+| Ended up with `0.0.0-stage` | that is the empty stub — remove it and install `latest` |
+| Icon present but no number | no skey, or the gateway is unreachable — expected behaviour, never a stale number |
+
+---
+
 It turns a company AI quota gateway (built on [New API](https://github.com/Calcium-Ion/new-api)) into a resident panel inside the Harness Web UI: the sidebar row shows the remaining-quota percentage and refreshes on a click, and the panel itself covers the quota overview, model limits, paginated call logs, model pricing, and ranged call analysis with drill-down.
 
 - The UI runs in the browser (React + theme tokens, **importing no Harness Client package**), while the data is fetched from the gateway by the Harness Host process.
@@ -90,30 +138,7 @@ plugin_manager  install_bundle  target = <absolute path of the clone>
 
 During development a change to `client.js` takes effect on a page refresh; a change to `index.js` (the Host half) needs a Harness restart. The render test only really runs when React 18 is resolvable (see below), otherwise it reports SKIPPED.
 
-### Letting another agent install it
-
-Both the repository and the npm package are self-describing for an agent: `dsh.bundle.patch` and `dsh.client` in `package.json` mark it as a DSH bundle, and this README carries every step.
-
-**Copy the whole block below into a DSH on the target machine; it installs itself:**
-
-```text
-Install a DSH plugin for me: "AI Quota" panel (npm package dsh-ai-quota,
-repository https://github.com/hustwxw/dsh-ai-quota).
-
-Please do this in order:
-1. Call plugin_manager install_bundle with target = dsh-ai-quota, and enable it.
-2. If you get ERR_PNPM_FETCH_404 or the package is not found, retry with
-   registry = https://registry.npmjs.org.
-   Do not install 0.0.0-stage — that is npm's empty placeholder stub;
-   install latest (currently 0.3.2).
-3. Ask me to refresh the Web UI, then confirm an "AI Quota" icon shows up in the
-   sidebar (below Plugins / Scheduled tasks). You can also verify with
-   cordis_inspect_query on the main slot: a key = ai-quota-panel entry.
-4. Then tell me what to fill in.
-
-Do not touch my credentials afterwards: I will enter the gateway address and
-skey myself under Connection.
-```
+Prefer not to type commands? Hand [the prompt at the top](#-one-paste-install-hand-the-block-below-to-your-dsh) to the receiving DSH — it installs and verifies by itself.
 
 Only two prerequisites: DSH with a working Web UI on the target machine, and reachability of your own New API gateway (intranet / VPN).
 

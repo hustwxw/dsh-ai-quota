@@ -1,6 +1,6 @@
 {
   "name": "dsh-ai-quota",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "license": "MIT",
   "description": "AI 额度面板：额度概览、模型限制、调用记录、模型计费与调用分析；侧边栏显示剩余额度百分比，显示名称可配置",
   "keywords": [

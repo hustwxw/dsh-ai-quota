@@ -4,6 +4,47 @@
 
 AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
 
+---
+
+## ⚡ 一键安装：把下面整段复制给你的 DSH
+
+> **不用 clone、不用手填命令。** 这段提示词已经写好安装命令、镜像回退、版本陷阱和验证步骤；
+> 对方的 DSH 读完会自己装完并回报。**只发一个链接让它猜，大概率会装错版本或卡在 404。**
+
+```text
+你是 DSH，请帮我安装一个插件并验证它真的可用，不要只给我操作步骤。
+
+插件：AI 额度面板（npm 包名 dsh-ai-quota，仓库 https://github.com/hustwxw/dsh-ai-quota）
+
+必须照这个顺序做：
+1) 调用 plugin_manager，action = install_bundle，target = dsh-ai-quota；
+   装完确认它 enabled = true。
+2) 如果返回 ERR_PNPM_FETCH_404 / not-found / 包不存在：
+   - 先用 registry = https://registry.npmjs.org 重试一次（国内镜像对新包有几分钟同步延迟）；
+   - 仍然失败就 git clone https://github.com/hustwxw/dsh-ai-quota 到本地，
+     再把 target 换成该目录的绝对路径重装。
+   - 绝对不要安装 0.0.0-stage——那是 npm 自动生成的空壳占位包，装了侧边栏什么都不会出现。
+     应该装 latest（当前 0.3.3）。
+3) 装完提示我刷新 Web UI，并确认侧边栏出现「AI 额度」图标（位置在「插件 / 自动化任务」之后）。
+   你可以用 cordis_inspect_query（platform = client，provider = Slots，method = listSubTree，
+   root = main）确认里面有没有 key = ai-quota-panel 的条目。
+4) 向我汇报三件事：实际装上的版本号、侧边栏图标是否出现、我接下来需要填什么。
+
+红线：不要读取、不要向我索要、也不要替我填写 skey 或网关地址——
+那些我自己在面板的「连接设置」里填。skey 只应该存在我的本机凭据库里。
+```
+
+装完对方要做的事只有一件：**面板 → 连接设置 → 填网关地址和 skey**（默认地址是占位值，不填只会显示「未配置」）。
+
+| 常见失败 | 处理 |
+| --- | --- |
+| `ERR_PNPM_FETCH_404` / 找不到包 | 加 `registry = https://registry.npmjs.org` 重试；或改走 clone + 目录安装 |
+| 装上了但侧边栏没图标 | 刷新 Web UI；仍未出现就确认 bundle 是 enabled 状态 |
+| 装成了 `0.0.0-stage` | 那是空壳占位包，卸载后改装 `latest` |
+| 图标在但数字不显示 | 没配 skey 或网关不可达——属于预期行为，不会显示过期数字 |
+
+---
+
 把公司 AI 额度网关（基于 [New API](https://github.com/Calcium-Ion/new-api)）做成 Harness Web UI 里的常驻面板：侧边栏那一行直接显示剩余额度百分比，点图标即刷新；点进去可以看额度概览、模型限制、分页调用记录、模型计费，以及按时间范围做的调用分析与钻取。
 
 - 界面在浏览器里（React + 主题变量，**不依赖任何 Harness 客户端包**），数据由 Harness 的 Host 进程直连内网网关。
@@ -88,25 +129,7 @@ plugin_manager  install_bundle  target = <克隆目录的绝对路径>
 
 开发时改动 `client.js` 后刷新页面即可生效；改动 `index.js`（Host 半）需要重启 Harness。装了依赖的 pnpm store 里 React 18 时，`npm test` 里的渲染测试才会真正跑，否则自动 SKIP。
 
-### 让别的 agent 自己装
-
-这个仓库和 npm 包对 agent 都是自描述的：`package.json` 的 `dsh.bundle.patch` / `dsh.client` 说明它是 DSH bundle，`README` 给了全部步骤。
-
-**把下面整段复制给另一台机器上的 DSH，它会自己装好：**
-
-```text
-帮我装一个 DSH 插件：AI 额度面板（npm 包名 dsh-ai-quota，仓库 https://github.com/hustwxw/dsh-ai-quota）。
-
-请按顺序做：
-1. 用 plugin_manager 的 install_bundle，target 传 dsh-ai-quota，并启用它。
-2. 如果报 ERR_PNPM_FETCH_404 或找不到包，带上 registry = https://registry.npmjs.org 再试一次。
-   注意：不要安装 0.0.0-stage 这个版本，那是 npm 的空壳占位包；要装 latest（当前 0.3.2）。
-3. 装完让我刷新 Web UI，确认侧边栏出现「AI 额度」图标（在「插件 / 自动化任务」下面）；
-   也可以用 cordis_inspect_query 查 main 槽位里有没有 key = ai-quota-panel 的项来确定。
-4. 然后告诉我下一步怎么填配置。
-
-装好之后不要动我的凭据：网关地址和 skey 我自己在面板的「连接设置」里填。
-```
+不想手打命令？把[文首那段提示词](#-一键安装把下面整段复制给你的-dsh)直接发给对方的 DSH，它会自己装完并验证。
 
 前置条件只有两条：目标机器装了 DSH 且 Web UI 可用；能访问你自己的 New API 网关（内网 / VPN）。
 
