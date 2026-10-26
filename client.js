@@ -8,7 +8,7 @@
  * user's language and theme without importing any Harness Client package.
  */
 window.__ModuleLoader__.load({
-  id: '@local/dsh-ai-quota',
+  id: 'dsh-ai-quota',
   factory(require) {
     const React = require('react');
     const h = React.createElement;

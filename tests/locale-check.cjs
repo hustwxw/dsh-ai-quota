@@ -33,7 +33,7 @@ new Function('window', source)(global.window);
 
 const problems = [];
 if (definition === null) problems.push('bundle did not call __ModuleLoader__.load');
-if (definition && definition.id !== '@local/dsh-ai-quota') problems.push('unexpected bundle id: ' + definition.id);
+if (definition && definition.id !== 'dsh-ai-quota') problems.push('unexpected bundle id: ' + definition.id);
 
 const plugin = definition.factory((specifier) => {
   if (specifier === 'react') return ReactStub;

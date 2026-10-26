@@ -66,33 +66,42 @@ AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
 
 前提：本机有 DeepSeek Harness（Web UI 可用）。
 
+**一句话装**（从 npm 取最新版，不用 clone）：
+
+```
+plugin_manager  install_bundle  target = dsh-ai-quota
+```
+
+装完刷新 Web UI，侧边栏面板区出现「AI 额度」图标（位置在「插件 / 自动化任务」之后）。
+
+> 国内网络如果卡在 registry 上，可以指定源：`install_bundle` 传 `registry = https://registry.npmjs.org`（国内镜像 npmmirror 对新包有几分钟同步延迟）。
+
+从源码装（要改代码时用）：
+
 ```powershell
 git clone https://github.com/hustwxw/dsh-ai-quota.git
 ```
 
-然后在 Harness 里以本地目录形式安装并启用：
-
 ```
-plugin_manager  install_bundle  target = <克隆下来的绝对路径>
+plugin_manager  install_bundle  target = <克隆目录的绝对路径>
 ```
-
-装完刷新 Web UI，侧边栏面板区出现「AI 额度」图标（位置在「插件 / 自动化任务」之后）。
 
 开发时改动 `client.js` 后刷新页面即可生效；改动 `index.js`（Host 半）需要重启 Harness。装了依赖的 pnpm store 里 React 18 时，`npm test` 里的渲染测试才会真正跑，否则自动 SKIP。
 
 ### 让别的 agent 自己装
 
-这个仓库对 agent 是自描述的：`package.json` 的 `dsh.bundle.patch` / `dsh.client` 说明它是 DSH bundle，`README` 给了全部步骤。把下面这段直接丢给另一台机器上的 agent：
+这个仓库和 npm 包对 agent 都是自描述的：`package.json` 的 `dsh.bundle.patch` / `dsh.client` 说明它是 DSH bundle，`README` 给了全部步骤。把下面这段直接丢给另一台机器上的 agent：
 
 ```text
-把 https://github.com/hustwxw/dsh-ai-quota 克隆到本地任意目录（例如 ~/dsh-ai-quota），
-再用 DSH 的 plugin_manager 执行 install_bundle，target 填该目录的绝对路径；
+用 DSH 的 plugin_manager 执行 install_bundle，target 填 dsh-ai-quota（npm 包名），
 启用后刷新 Web UI，侧边栏出现「AI 额度」图标即安装成功。
-不要直接拿仓库 URL 当 target：这个包没有发布到 npm，按包名也找不到。
-装完打开面板 → 连接设置，填你自己的网关地址与 skey。
+然后打开面板 → 连接设置，填你自己的网关地址与 skey。
+只有需要改代码时才 git clone https://github.com/hustwxw/dsh-ai-quota 并按目录安装。
 ```
 
-前置条件只有两条：目标机器装了 DSH 且 Web UI 可用；能访问你自己的 New API 网关（内网 / VPN）。另外注意 `install_bundle` 的 target 是**本地目录路径**（本机安装就是这种方式），不是仓库地址。
+前置条件只有两条：目标机器装了 DSH 且 Web UI 可用；能访问你自己的 New API 网关（内网 / VPN）。
+
+npm 包主页：<https://www.npmjs.com/package/dsh-ai-quota>
 
 ## 配置
 
@@ -155,7 +164,7 @@ docs/              README 用的截图
 tests/             三个自测脚本（假网关集成测试、语言包自检、React 渲染测试）
 ```
 
-包名刻意用 `@local/dsh-ai-quota`：DSH 的本地 bundle 约定，避免被当成可从 npm 安装的包（`private: true`）。
+包名 `dsh-ai-quota` 直接对应 npm 上的同名包，`install_bundle` 传包名即可安装；从源码装则是把 target 换成克隆目录。
 
 ## 许可
 

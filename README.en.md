@@ -66,35 +66,45 @@ Analysis is "collect, then aggregate locally": the Host walks pages from 1 until
 
 Requires a local DeepSeek Harness with a working Web UI.
 
+**One line, straight from npm** (no clone needed):
+
+```
+plugin_manager  install_bundle  target = dsh-ai-quota
+```
+
+Refresh the Web UI: an **AI Quota** icon appears in the sidebar panel list, after Plugins / Scheduled tasks.
+
+> Behind a slow or stale mirror, point `install_bundle` at `registry = https://registry.npmjs.org`; npmmirror lags a few minutes behind for a freshly published package.
+
+Installing from source (when you want to change the code):
+
 ```powershell
 git clone https://github.com/hustwxw/dsh-ai-quota.git
 ```
 
-Then install it as a local bundle inside Harness:
+Then install that directory instead:
 
 ```
 plugin_manager  install_bundle  target = <absolute path of the clone>
 ```
 
-Refresh the Web UI: an **AI Quota** icon appears in the sidebar panel list, after Plugins / Scheduled tasks.
-
 During development a change to `client.js` takes effect on a page refresh; a change to `index.js` (the Host half) needs a Harness restart. The render test only really runs when React 18 is resolvable (see below), otherwise it reports SKIPPED.
 
 ### Letting another agent install it
 
-The repository is self-describing for an agent: `dsh.bundle.patch` and `dsh.client` in `package.json` mark it as a DSH bundle, and this README carries every step. Hand the block below to an agent on the target machine:
+Both the repository and the npm package are self-describing for an agent: `dsh.bundle.patch` and `dsh.client` in `package.json` mark it as a DSH bundle, and this README carries every step. Hand the block below to an agent on the target machine:
 
 ```text
-Clone https://github.com/hustwxw/dsh-ai-quota into any local directory
-(e.g. ~/dsh-ai-quota), then run DSH's plugin_manager install_bundle with
-target set to that directory's absolute path; enable the bundle and refresh
-the Web UI — an "AI Quota" icon in the sidebar means it worked.
-Do not pass the repository URL as target: this package is not published to
-npm and cannot be found by name either.
+Run DSH's plugin_manager install_bundle with target set to dsh-ai-quota (the npm
+package name); enable the bundle and refresh the Web UI — an "AI Quota" icon in
+the sidebar means it worked.
 Then open the panel → Connection and fill in your own gateway address and skey.
+Only clone https://github.com/hustwxw/dsh-ai-quota when you need to change code.
 ```
 
-Only two prerequisites: DSH with a working Web UI on the target machine, and reachability of your own New API gateway (intranet / VPN). Note that `install_bundle` takes a **local directory path** (the way this machine installs it), not a repository URL.
+Only two prerequisites: DSH with a working Web UI on the target machine, and reachability of your own New API gateway (intranet / VPN).
+
+npm page: <https://www.npmjs.com/package/dsh-ai-quota>
 
 ## Configuration
 
@@ -157,7 +167,7 @@ docs/              Screenshots used by the READMEs
 tests/             Three self-tests (fake-gateway integration, locale/registration check, React render test)
 ```
 
-The package is deliberately named `@local/dsh-ai-quota`: that is the local-bundle convention in DSH, and `private: true` keeps it from being mistaken for an npm-installable package.
+The package is published to npm as `dsh-ai-quota`, so `install_bundle` takes the package name; installing from source means pointing `target` at the clone instead.
 
 ## License
 
