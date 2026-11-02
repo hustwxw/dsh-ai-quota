@@ -345,6 +345,219 @@ if (start !== undefined) {
 const missingJob = await call('GET', '/analysis/status?id=99999');
 if (missingJob.body !== undefined && missingJob.body.ok !== false) problems.push('unknown job id was accepted');
 
+/* --------------------------------------------------------------- value panel */
+
+/** Peak = a weekday inside 01:00-04:00 or 06:00-10:00 UTC, per the skill. */
+const isPeakRow = (row) => {
+  const at = new Date(row.created_at * 1000);
+  const day = at.getUTCDay();
+  if (day === 0 || day === 6) return false;
+  const hour = at.getUTCHours();
+  return (hour >= 1 && hour < 4) || (hour >= 6 && hour < 10);
+};
+
+const expected = rows.reduce((acc, row) => {
+  const tokens = row.prompt_tokens + row.completion_tokens;
+  acc.tokens += tokens;
+  if (isPeakRow(row)) acc.peakTokens += tokens;
+  else acc.offpeakTokens += tokens;
+  if (typeof row.quota === 'number') acc.quota += row.quota;
+  acc.peakRecords += isPeakRow(row) ? 1 : 0;
+  return acc;
+}, { tokens: 0, peakTokens: 0, offpeakTokens: 0, quota: 0, peakRecords: 0 });
+
+const priceTable = (peakRate, offpeakRate, skip) => {
+  const table = {};
+  for (const model of MODELS) {
+    if (model === skip) continue;
+    table[model] = {
+      peak: { hit: peakRate, miss: peakRate, output: peakRate },
+      offpeak: { hit: offpeakRate, miss: offpeakRate, output: offpeakRate },
+    };
+  }
+  return table;
+};
+
+const walk = expectOk('POST /value/start', await call('POST', '/value/start'));
+if (walk !== undefined) {
+  const deadline = Date.now() + 15000;
+  let status = walk;
+  while (status.phase === 'running' && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    const next = await call('GET', '/value/status?id=' + walk.id);
+    if (next.body === undefined || next.body.ok !== true) {
+      problems.push('value status read failed: ' + JSON.stringify(next.body));
+      break;
+    }
+    status = next.body.data;
+  }
+  if (status.phase !== 'complete') problems.push('value walk ended as ' + status.phase + ': ' + status.message);
+  if (status.collected !== 120) problems.push('value walk collected ' + status.collected + ' rows');
+  if (status.range !== null) problems.push('the value walk kept a range filter: ' + JSON.stringify(status.range));
+  if (status.outside !== 0) problems.push('the whole-history walk dropped ' + status.outside + ' rows as outside');
+
+  const priced = expectOk('POST /value/result', await call('POST', '/value/result', {
+    id: walk.id,
+    rate: 7,
+    prices: priceTable(2, 1),
+  }));
+  if (priced !== undefined) {
+    if (priced.counts.consumption !== 120) problems.push('consumption count is ' + priced.counts.consumption);
+    if (priced.counts.failures !== 0 || priced.counts.others !== 0) {
+      problems.push('unexpected non-consumption counters: ' + JSON.stringify(priced.counts));
+    }
+    if (priced.totals.tokens !== expected.tokens) {
+      problems.push('priced tokens ' + priced.totals.tokens + ' != ' + expected.tokens);
+    }
+    if (priced.buckets.peak.tokens !== expected.peakTokens) {
+      problems.push('peak tokens ' + priced.buckets.peak.tokens + ' != ' + expected.peakTokens);
+    }
+    if (priced.buckets.offpeak.tokens !== expected.offpeakTokens) {
+      problems.push('offpeak tokens ' + priced.buckets.offpeak.tokens + ' != ' + expected.offpeakTokens);
+    }
+    if (priced.counts.peakRecords !== expected.peakRecords) {
+      problems.push('peak records ' + priced.counts.peakRecords + ' != ' + expected.peakRecords);
+    }
+    const expectedUsd = (expected.peakTokens * 2 + expected.offpeakTokens) / 1e6;
+    if (Math.abs(priced.totals.usd - expectedUsd) > 1e-9) {
+      problems.push('peak/off-peak split priced ' + priced.totals.usd + ' != ' + expectedUsd);
+    }
+    if (Math.abs(priced.totals.cny - expectedUsd * 7) > 1e-6) {
+      problems.push('CNY conversion is ' + priced.totals.cny);
+    }
+    // The three usage types of one period must add up to that period's total.
+    for (const key of ['peak', 'offpeak']) {
+      const bucket = priced.buckets[key];
+      const sum = bucket.hit.usd + bucket.miss.usd + bucket.output.usd;
+      if (Math.abs(sum - bucket.usd) > 1e-9) problems.push(key + ' type sum is ' + sum + ' not ' + bucket.usd);
+      const tokens = bucket.hit.tokens + bucket.miss.tokens + bucket.output.tokens;
+      if (tokens !== bucket.tokens) problems.push(key + ' token sum is ' + tokens + ' not ' + bucket.tokens);
+    }
+    if (priced.quota.logQuota !== expected.quota) {
+      problems.push('log quota is ' + priced.quota.logQuota + ' not ' + expected.quota);
+    }
+    if (priced.quota.totalUsed !== 100) problems.push('total_used is ' + priced.quota.totalUsed);
+    if (priced.quota.reconciled !== false) problems.push('a 100 vs ' + expected.quota + ' delta reconciled');
+    const expectedGranted = (expectedUsd * 1000) / expected.quota;
+    if (Math.abs(priced.extrapolation.granted.usd - expectedGranted) > 1e-9) {
+      problems.push('whole-quota extrapolation is ' + priced.extrapolation.granted.usd + ' not ' + expectedGranted);
+    }
+    const provisional = priced.extrapolation.provisional;
+    if (provisional.incomplete !== false) problems.push('a complete walk was flagged incomplete');
+    if (provisional.unpriced !== 0) problems.push('a fully priced table reported ' + provisional.unpriced + ' unpriced');
+    if (provisional.quota !== false) problems.push('the quota section was reported missing');
+    if (provisional.mismatch !== true) problems.push('the quota mismatch was not flagged');
+  }
+
+  // A model without a price is listed, not priced with another model's rate.
+  const partial = expectOk('POST /value/result (unpriced)', await call('POST', '/value/result', {
+    id: walk.id,
+    rate: 7,
+    prices: priceTable(2, 1, 'qwen-max'),
+  }));
+  if (partial !== undefined) {
+    const unpricedModels = partial.unpriced.models;
+    if (unpricedModels.length !== 1 || unpricedModels[0] !== 'qwen-max') {
+      problems.push('unpriced models are ' + JSON.stringify(unpricedModels));
+    }
+    if (partial.unpriced.records !== 40) problems.push('unpriced rows are ' + partial.unpriced.records);
+    if (partial.extrapolation.provisional.unpriced !== 40) problems.push('the unpriced count was not flagged');
+    if (partial.totals.tokens >= expected.tokens) problems.push('unpriced rows leaked into the priced totals');
+  }
+
+  // A holiday the reader lists drops its rows to the off-peak rate.
+  const holidayDay = new Date(rows[1].created_at * 1000).toISOString().slice(0, 10);
+  const holiday = expectOk('POST /value/result (holiday)', await call('POST', '/value/result', {
+    id: walk.id,
+    rate: 7,
+    holidays: [holidayDay],
+    prices: priceTable(2, 1),
+  }));
+  if (holiday !== undefined) {
+    if (holiday.holidays !== 1) problems.push('the holiday list read ' + holiday.holidays + ' days');
+    if (holiday.totals.usd >= priced.totals.usd) problems.push('a holiday did not move rows to the off-peak rate');
+  }
+
+  // A table quoted in CNY needs no conversion: the CNY column is its own number
+  // and only the USD column goes through the rate.
+  const cny = expectOk('POST /value/result (CNY table)', await call('POST', '/value/result', {
+    id: walk.id,
+    rate: 7,
+    currency: 'CNY',
+    prices: priceTable(2, 1),
+  }));
+  if (cny !== undefined) {
+    const expectedCny = (expected.peakTokens * 2 + expected.offpeakTokens) / 1e6;
+    if (cny.currency !== 'CNY') problems.push('currency echo is ' + cny.currency);
+    if (Math.abs(cny.totals.cny - expectedCny) > 1e-12) problems.push('a CNY table was converted: ' + cny.totals.cny);
+    if (Math.abs(cny.totals.usd - expectedCny / 7) > 1e-12) problems.push('USD from a CNY table is ' + cny.totals.usd);
+    if (Math.abs(cny.extrapolation.granted.cny - (expectedCny * 1000) / expected.quota) > 1e-9) {
+      problems.push('the CNY extrapolation is ' + cny.extrapolation.granted.cny);
+    }
+  }
+  const badCurrency = await call('POST', '/value/result', {
+    id: walk.id, rate: 7, currency: 'EUR', prices: priceTable(2, 1),
+  });
+  if (badCurrency.body !== undefined && badCurrency.body.ok !== false) problems.push('currency EUR was accepted');
+
+  const badRate = await call('POST', '/value/result', { id: walk.id, rate: 0, prices: priceTable(2, 1) });
+  if (badRate.body !== undefined && badRate.body.ok !== false) problems.push('rate 0 was accepted');
+  const badHoliday = await call('POST', '/value/result', {
+    id: walk.id, rate: 7, holidays: ['01/02'], prices: priceTable(2, 1),
+  });
+  if (badHoliday.body !== undefined && badHoliday.body.ok !== false) problems.push('a malformed holiday was accepted');
+  const badPrice = await call('POST', '/value/result', {
+    id: walk.id, rate: 7, prices: { 'deepseek-v3': { peak: { hit: -1, miss: 1, output: 1 } } },
+  });
+  if (badPrice.body !== undefined && badPrice.body.ok !== false) problems.push('a negative price was accepted');
+
+  const cancelled = expectOk('POST /value/cancel', await call('POST', '/value/cancel', { id: walk.id }));
+  if (cancelled !== undefined && cancelled.phase !== 'complete') problems.push('cancel changed a finished walk');
+}
+
+const missingWalk = await call('GET', '/value/status?id=99999');
+if (missingWalk.body !== undefined && missingWalk.body.ok !== false) problems.push('unknown walk id was accepted');
+
+// A windowed walk prices only its own slice and says so: no reconciliation is
+// attempted against the lifetime total, and the extrapolation is flagged.
+const ranged = expectOk('POST /value/start (ranged)', await call('POST', '/value/start', {
+  start: BASE + DAY,
+  end: BASE + 3 * DAY,
+}));
+if (ranged !== undefined) {
+  const deadline = Date.now() + 15000;
+  let status = ranged;
+  while (status.phase === 'running' && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    status = (await call('GET', '/value/status?id=' + ranged.id)).body.data;
+  }
+  if (status.phase !== 'complete') problems.push('the ranged walk ended as ' + status.phase);
+  const inRange = rows.filter((row) => row.created_at >= BASE + DAY && row.created_at < BASE + 3 * DAY).length;
+  if (status.collected !== inRange) problems.push('the ranged walk kept ' + status.collected + ' rows, not ' + inRange);
+  if (status.range === null || status.range.start !== BASE + DAY) problems.push('the ranged walk lost its range');
+  if (status.outside !== rows.length - inRange) problems.push('the ranged walk dropped ' + status.outside + ' rows as outside');
+
+  const sliced = expectOk('POST /value/result (ranged)', await call('POST', '/value/result', {
+    id: ranged.id,
+    rate: 7,
+    currency: 'CNY',
+    prices: priceTable(2, 1),
+  }));
+  if (sliced !== undefined) {
+    if (sliced.status.range === null) problems.push('the priced range is missing from the status');
+    if (sliced.quota.ranged !== true) problems.push('a ranged walk did not report its range');
+    if (sliced.quota.reconciled !== null) problems.push('a ranged walk claimed reconciliation ' + sliced.quota.reconciled);
+    if (sliced.extrapolation.provisional.ranged !== true) problems.push('a ranged extrapolation was not flagged');
+    if (sliced.extrapolation.provisional.mismatch !== false) problems.push('a ranged walk reported a quota mismatch');
+    if (sliced.counts.consumption !== inRange) problems.push('the priced range counted ' + sliced.counts.consumption + ' rows');
+  }
+}
+
+const badRange = await call('POST', '/value/start', { start: BASE + 5 * DAY, end: BASE + DAY });
+if (badRange.body !== undefined && badRange.body.ok !== false) problems.push('a reversed date range was accepted');
+const halfRange = await call('POST', '/value/start', { start: BASE + DAY });
+if (halfRange.body !== undefined && halfRange.body.ok !== false) problems.push('a half-filled date range was accepted');
+
 const unknown = await call('GET', '/nope');
 if (unknown.status !== 404) problems.push('unknown path answered ' + unknown.status);
 

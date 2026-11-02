@@ -84,7 +84,7 @@ if (!source.includes(HOOK)) {
 }
 const EXPOSE = [
   '    const __internals = {',
-  '      Panel, OverviewTab, ModelsTab, LogsTab, AnalysisTab, SettingsTab, VersionsTab,',
+  '      Panel, OverviewTab, ModelsTab, LogsTab, AnalysisTab, ValueTab, SettingsTab, VersionsTab,',
   '      Chart, RankList, Modal, Table, Pager, Stat, Note,',
   '      ZH, EN,',
   '    };',
@@ -439,6 +439,12 @@ renderCase('Panel loading', React.createElement(internals.Panel, { t }), [
   [ZH['tab.overview'], 'the overview tab'],
   [ZH['common.loading'], 'the loading note'],
 ]);
+// The value tab leads the row: it is the answer the panel exists for.
+const shellMarkup = renderToStaticMarkup(React.createElement(internals.Panel, { t }));
+if (shellMarkup.indexOf(ZH['tab.value']) < 0) problems.push('the value tab is not in the shell');
+else if (shellMarkup.indexOf(ZH['tab.value']) > shellMarkup.indexOf(ZH['tab.overview'])) {
+  problems.push('the value tab is not the first tab');
+}
 
 // Overview: complete data, then partial failure, then nothing at all.
 renderCase('Overview full', React.createElement(internals.OverviewTab, { t, snapshot }), [
@@ -513,6 +519,16 @@ renderCase('Analysis gated', React.createElement(internals.AnalysisTab, { t, ena
 ]);
 renderCase('Analysis ready', React.createElement(internals.AnalysisTab, { t, enabled: true }), [
   [ZH['analysis.start'], 'the start button'],
+]);
+
+// The value tab: its first paint carries the collect control, the editable
+// price table and the promise that nothing is priced before a walk.
+renderCase('Value gated', React.createElement(internals.ValueTab, { t, enabled: false }), [
+  [ZH['value.collect'], 'the collect button'],
+  [ZH['value.needCollect'], 'the empty-result note'],
+  [ZH['value.prices'], 'the price table card'],
+  [ZH['value.rate'], 'the rate field'],
+  [ZH['value.priceOffpeak'], 'the off-peak price row'],
 ]);
 
 // Settings: no token yet, then configured.
@@ -616,6 +632,9 @@ renderCase('Settings (en)', React.createElement(internals.SettingsTab, {
 renderCase('Versions (en)', React.createElement(internals.VersionsTab, { t: tEn }), []);
 renderCase('Logs (en)', React.createElement(internals.LogsTab, { t: tEn, enabled: false }), []);
 renderCase('Analysis (en)', React.createElement(internals.AnalysisTab, { t: tEn, enabled: false }), []);
+renderCase('Value (en)', React.createElement(internals.ValueTab, { t: tEn, enabled: false }), [
+  [EN['value.collect'], 'the English collect button'],
+]);
 renderCase('Models (en)', React.createElement(internals.ModelsTab, { t: tEn, snapshot }), []);
 active = 'zh';
 

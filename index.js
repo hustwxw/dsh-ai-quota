@@ -72,8 +72,43 @@ const PRICE_FIELDS = [
 const LOG_FIELDS = [
   'id', 'created_at', 'type', 'model_name', 'quota', 'prompt_tokens',
   'completion_tokens', 'use_time', 'is_stream', 'cache_tokens',
-  'cache_write_tokens', 'request_id',
+  'cache_write_tokens', 'request_id', 'cached_tokens',
 ]
+
+/** Log type 2 is billed; 4 and 5 are failed requests that must not be priced. */
+const LOG_TYPE_CONSUMPTION = 2
+const LOG_TYPE_FAILURES = [4, 5]
+
+/**
+ * DeepSeek's peak windows, in UTC hours on a weekday: 01:00-04:00 and
+ * 06:00-10:00 (`[start, end)`). Everything else — including weekends and the
+ * holidays the user lists — is billed at the cheaper rate.
+ */
+const PEAK_HOURS = [[1, 4], [6, 10]]
+
+/** Price-table guards: a typo must not turn into an absurd estimate. */
+const MAX_PRICE_MODELS = 200
+const MAX_PRICE_VALUE = 1_000_000
+const MAX_HOLIDAYS = 400
+const MIN_RATE = 0.1
+const MAX_RATE = 100
+
+/**
+ * Where the official price table is read from. Every docs page is also served
+ * as Markdown, so the source is a real table rather than a rendered DOM; the
+ * Chinese page quotes RMB, which is what a domestic relay bills in.
+ */
+const PRICING_URL = 'https://api-docs.deepseek.com/zh-cn/quick_start/pricing.md'
+
+/** A fetched table is reused for this long; the page changes rarely. */
+const PRICING_TTL_MS = 6 * 60 * 60 * 1000
+
+/** Refuse a pricing response larger than this, and time it out. */
+const PRICING_MAX_BYTES = 2 * 1024 * 1024
+const PRICING_TIMEOUT_MS = 15000
+
+/** The units a price table may be denominated in. */
+const CURRENCIES = ['CNY', 'USD']
 
 /* ------------------------------------------------------------------ helpers */
 
@@ -343,6 +378,24 @@ function normalizeRange(raw) {
   return { start, end }
 }
 
+/**
+ * Validate a priced walk's optional window: absent means "every page".
+ * @returns `{ start, end }`, or null for a whole-history walk.
+ */
+function normalizeValueRange(raw) {
+  const hasStart = raw?.start !== undefined && raw?.start !== null && raw?.start !== ''
+  const hasEnd = raw?.end !== undefined && raw?.end !== null && raw?.end !== ''
+  if (!hasStart && !hasEnd) return null
+  if (!hasStart || !hasEnd) throw new Error('日期范围要同时填开始和结束')
+  const start = Number(raw.start)
+  const end = Number(raw.end)
+  if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end <= start) {
+    throw new Error('日期范围不正确，开始不能晚于结束')
+  }
+  if (end - start > MAX_VALUE_RANGE_SECONDS) throw new Error('日期范围最长 366 天')
+  return { start, end }
+}
+
 /** Validate one analysis view query. */
 function normalizeQuery(raw) {
   const granularity = raw?.granularity === 'hour' ? 'hour' : 'day'
@@ -362,6 +415,467 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+/** How many times one page is re-requested before the walk gives up. */
+const PAGE_ATTEMPTS = 3
+
+/** Longest accepted date window for a priced walk. */
+const MAX_VALUE_RANGE_SECONDS = 366 * 86400
+
+/* --------------------------------------------------------------------- value */
+
+/** `YYYY-MM-DD` of one epoch, in UTC. */
+function utcDateOf(seconds) {
+  return new Date(seconds * 1000).toISOString().slice(0, 10)
+}
+
+/**
+ * Whether one row was billed at DeepSeek's peak rate: a weekday inside one of
+ * the two UTC windows, and not a holiday the user listed.
+ * @param seconds - `created_at` of the row.
+ * @param holidays - Set of `YYYY-MM-DD` strings billed at the off-peak rate.
+ */
+function isPeakAt(seconds, holidays) {
+  const at = new Date(seconds * 1000)
+  const weekday = at.getUTCDay()
+  if (weekday === 0 || weekday === 6) return false
+  if (holidays.has(utcDateOf(seconds))) return false
+  const hour = at.getUTCHours()
+  for (const [start, end] of PEAK_HOURS) {
+    if (hour >= start && hour < end) return true
+  }
+  return false
+}
+
+/** Only `YYYY-MM-DD` entries, deduplicated; an absent list is empty. */
+function normalizeHolidays(raw) {
+  if (raw === undefined || raw === null) return new Set()
+  if (!Array.isArray(raw)) throw new Error('节假日列表格式不正确')
+  if (raw.length > MAX_HOLIDAYS) throw new Error(`节假日最多 ${MAX_HOLIDAYS} 天`)
+  const days = new Set()
+  for (const entry of raw) {
+    if (typeof entry !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(entry)) {
+      throw new Error('节假日只能填 YYYY-MM-DD')
+    }
+    days.add(entry)
+  }
+  return days
+}
+
+/** One per-million-token price triple, in USD. */
+function normalizePriceTriple(raw, label) {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error(`价格表里 ${label} 的格式不正确`)
+  }
+  const triple = {}
+  for (const field of ['hit', 'miss', 'output']) {
+    const value = raw[field]
+    if (!isNumber(value) || value < 0 || value > MAX_PRICE_VALUE) {
+      throw new Error(`价格表里 ${label} 的价格必须是 0 到 ${MAX_PRICE_VALUE} 之间的数字`)
+    }
+    triple[field] = value
+  }
+  return triple
+}
+
+/** The whole price table: model -> { peak, offpeak } in USD per 1M tokens. */
+function normalizePrices(raw) {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('价格表格式不正确')
+  }
+  const names = Object.keys(raw)
+  if (names.length > MAX_PRICE_MODELS) throw new Error(`价格表最多 ${MAX_PRICE_MODELS} 个模型`)
+  const table = new Map()
+  for (const model of names) {
+    const entry = raw[model]
+    if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new Error(`价格表里 ${model} 的格式不正确`)
+    }
+    table.set(model, {
+      peak: normalizePriceTriple(entry.peak, `${model} 的高峰价`),
+      offpeak: normalizePriceTriple(entry.offpeak, `${model} 的优惠价`),
+    })
+  }
+  return table
+}
+
+/** The USD/CNY rate the estimate converts with. */
+function normalizeRate(raw) {
+  const value = Number(raw)
+  if (!Number.isFinite(value) || value < MIN_RATE || value > MAX_RATE) {
+    throw new Error(`汇率必须是 ${MIN_RATE} 到 ${MAX_RATE} 之间的数字`)
+  }
+  return value
+}
+
+/** The unit the price table is denominated in; absent means USD (older pages). */
+function normalizeCurrency(raw) {
+  if (raw === undefined || raw === null) return 'USD'
+  const text = String(raw).toUpperCase()
+  if (!CURRENCIES.includes(text)) throw new Error('价目货币只能是 CNY 或 USD')
+  return text
+}
+
+/* ----------------------------------------------------------- official prices */
+
+/**
+ * One HTTPS GET returning text: no redirect following, 15 s budget, 2 MiB cap.
+ * The pricing page is the only request this bundle makes outside the gateway.
+ */
+function fetchPricingText(url) {
+  const target = new URL(url)
+  return new Promise((resolve, reject) => {
+    let settled = false
+    const settle = (fn, value) => {
+      if (settled) return
+      settled = true
+      fn(value)
+    }
+    const outgoing = httpsRequest(target, {
+      method: 'GET',
+      headers: { accept: 'text/markdown, text/plain' },
+      agent: false,
+    }, (response) => {
+      const status = response.statusCode ?? 0
+      if (status < 200 || status > 299) {
+        response.resume()
+        settle(reject, new Error(`官方价格页返回 HTTP ${status}`))
+        return
+      }
+      const chunks = []
+      let size = 0
+      response.on('data', (chunk) => {
+        size += chunk.length
+        if (size > PRICING_MAX_BYTES) {
+          outgoing.destroy()
+          settle(reject, new Error('官方价格页超过 2 MiB，已放弃'))
+          return
+        }
+        chunks.push(chunk)
+      })
+      response.on('error', () => settle(reject, new Error('官方价格页读取失败')))
+      response.on('end', () => {
+        if (settled) return
+        settle(resolve, Buffer.concat(chunks).toString('utf8'))
+      })
+    })
+    outgoing.setTimeout(PRICING_TIMEOUT_MS, () => {
+      outgoing.destroy()
+      settle(reject, new Error('官方价格页请求超时，请检查本机能否访问外网'))
+    })
+    outgoing.on('error', () => settle(reject, new Error('无法访问官方价格页，请检查本机网络或代理')))
+    outgoing.end()
+  })
+}
+
+/** A model name cell, or null when the cell is not one. */
+function modelCellOf(cell) {
+  const text = cell.replace(/\(\d+\)/g, '').replace(/\s+/g, '')
+  if (!/^[a-z0-9][a-z0-9.-]*$/i.test(text)) return null
+  return text.toLowerCase().includes('deepseek') ? text : null
+}
+
+/** A price cell's number and its unit, or null when the cell is not a price. */
+function priceCellOf(cell) {
+  const text = cell.replace(/\s+/g, '')
+  const match = /^([0-9]+(?:\.[0-9]+)?)(元|￥|\$|CNY|USD)?$/i.exec(text)
+  if (match === null) return null
+  const unit = match[2]
+  const currency = unit === undefined
+    ? null
+    : ((unit === '元' || unit === '￥' || /^CNY$/i.test(unit)) ? 'CNY' : 'USD')
+  return { value: Number(match[1]), currency }
+}
+
+/** Which usage type a price row describes. */
+function priceKindOf(cells) {
+  const joined = cells.join(' ')
+  if (/缓存未命中|cache\s*miss/i.test(joined)) return 'miss'
+  if (/缓存命中|cache\s*hit/i.test(joined)) return 'hit'
+  if (/输出|output/i.test(joined)) return 'output'
+  return null
+}
+
+/** Which billing period a price row describes. */
+function pricePeriodOf(cells) {
+  const joined = cells.join(' ')
+  if (/空闲|off-?\s*peak/i.test(joined)) return 'offpeak'
+  if (/高峰|peak/i.test(joined)) return 'peak'
+  return null
+}
+
+/**
+ * Read the model/price table out of the official pricing page's Markdown.
+ *
+ * The page is a Markdown table whose header row lists one column per model and
+ * whose price rows are labelled by usage type and billing period, so the parse
+ * keys off those labels instead of fixed positions. Anything short of a
+ * complete set of six numbers per model rejects the page, and the caller falls
+ * back to the bundled snapshot.
+ * @param text - the Markdown source of the pricing page.
+ * @returns `{ currency, models }` in the page's own unit per 1M tokens.
+ */
+export function parsePricingMarkdown(text) {
+  if (typeof text !== 'string' || text.length === 0) throw new Error('官方价格页是空的')
+  const rows = []
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (!trimmed.startsWith('|')) continue
+    if (/^\|[\s:|-]+\|$/.test(trimmed)) continue
+    rows.push(trimmed.replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim()))
+  }
+  if (rows.length === 0) throw new Error('官方价格页里没有表格')
+
+  // The header row is the one whose label cell is just "模型" / "Model".
+  const isHeader = (cells) => cells.some((cell) => /^(模型|model)(\(\d+\))?$/i.test(cell))
+  let models = []
+  for (const cells of rows) {
+    if (!isHeader(cells)) continue
+    const names = cells.map(modelCellOf).filter((name) => name !== null)
+    if (names.length > models.length) models = names
+  }
+  if (models.length === 0) throw new Error('官方价格页里没有识别到模型')
+
+  const table = new Map()
+  for (const model of models) {
+    table.set(model, { peak: {}, offpeak: {} })
+  }
+  let currency = null
+  for (const cells of rows) {
+    const kind = priceKindOf(cells)
+    const period = pricePeriodOf(cells)
+    if (kind === null || period === null) continue
+    const prices = cells.map(priceCellOf).filter((cell) => cell !== null)
+    // A price row carries exactly one number per model column.
+    if (prices.length !== models.length) continue
+    for (const price of prices) {
+      if (price.currency === null) continue
+      if (currency !== null && currency !== price.currency) throw new Error('官方价格页里的货币单位不一致')
+      currency = price.currency
+    }
+    models.forEach((model, index) => { table.get(model)[period][kind] = prices[index].value })
+  }
+
+  const usable = {}
+  for (const [model, buckets] of table) {
+    const complete = ['peak', 'offpeak'].every((period) =>
+      ['hit', 'miss', 'output'].every((kind) => isNumber(buckets[period][kind])))
+    if (complete) usable[model] = buckets
+  }
+  if (Object.keys(usable).length === 0) throw new Error('官方价格页里没有完整的价目行，已放弃')
+  return { currency: currency ?? 'CNY', models: usable }
+}
+
+/** One empty period bucket: three usage types plus the row totals. */
+function emptyBucket() {
+  return {
+    hit: { tokens: 0, amount: 0, usd: 0, cny: 0 },
+    miss: { tokens: 0, amount: 0, usd: 0, cny: 0 },
+    output: { tokens: 0, amount: 0, usd: 0, cny: 0 },
+    records: 0,
+    quota: 0,
+    tokens: 0,
+    amount: 0,
+    usd: 0,
+    cny: 0,
+  }
+}
+
+/**
+ * Price a collected job the way the `deepseek-usage-value` skill does: only
+ * consumption rows, cache hits split out of the input, every model at its own
+ * rate, peak and off-peak apart, then extrapolated to the whole quota.
+ *
+ * Modules whose model has no price are listed instead of being priced with
+ * another model's rate, and any extrapolation that rests on a guess is flagged.
+ * @param job - a finished collection job.
+ * @param input - `{ prices, rate, currency, holidays }` as sent by the page.
+ */
+async function valueResult(job, input) {
+  const prices = normalizePrices(input?.prices)
+  const rate = normalizeRate(input?.rate)
+  const currency = normalizeCurrency(input?.currency)
+  const holidays = normalizeHolidays(input?.holidays)
+  // The table is quoted in one unit; both columns are derived from it here so
+  // the page never has to decide which direction a rate applies in.
+  const toUsd = (amount) => (currency === 'CNY' ? amount / rate : amount)
+  const toCny = (amount) => (currency === 'CNY' ? amount : amount * rate)
+  const buckets = { peak: emptyBucket(), offpeak: emptyBucket() }
+  const models = new Map()
+  let consumption = 0
+  let failures = 0
+  let others = 0
+  let pricedQuota = 0
+  let allQuota = 0
+
+  for (const row of job.rows) {
+    const type = isNumber(row.type) ? row.type : null
+    if (type !== LOG_TYPE_CONSUMPTION) {
+      if (LOG_TYPE_FAILURES.includes(type)) failures += 1
+      else others += 1
+      continue
+    }
+    consumption += 1
+    const model = typeof row.model_name === 'string' && row.model_name.length > 0 ? row.model_name : null
+    const prompt = isNumber(row.prompt_tokens) ? row.prompt_tokens : 0
+    const output = isNumber(row.completion_tokens) ? row.completion_tokens : 0
+    // `cache_tokens` is the contract field; `cached_tokens` is the equivalent
+    // name some gateways use. Neither present means "no cache hit reported".
+    const hit = isNumber(row.cache_tokens)
+      ? row.cache_tokens
+      : (isNumber(row.cached_tokens) ? row.cached_tokens : 0)
+    if (hit > prompt) {
+      throw new Error(`${model === null ? '未知模型' : model} 的日志缓存命中数大于输入 token 数，已停止金额汇总`)
+    }
+    const miss = prompt - hit
+    const quota = isNumber(row.quota) ? row.quota : 0
+    allQuota += quota
+    const key = isPeakAt(row.created_at, holidays) ? 'peak' : 'offpeak'
+    const known = models.get(model)
+    const entry = known ?? {
+      model, records: 0, hit: 0, miss: 0, output: 0, quota: 0, amount: 0, priced: false,
+    }
+    entry.records += 1
+    entry.hit += hit
+    entry.miss += miss
+    entry.output += output
+    entry.quota += quota
+    const price = model === null ? undefined : prices.get(model)
+    if (price !== undefined) {
+      const unit = price[key]
+      const bucket = buckets[key]
+      const hitAmount = (hit * unit.hit) / 1e6
+      const missAmount = (miss * unit.miss) / 1e6
+      const outputAmount = (output * unit.output) / 1e6
+      const amount = hitAmount + missAmount + outputAmount
+      entry.priced = true
+      entry.amount += amount
+      bucket.hit.tokens += hit
+      bucket.hit.amount += hitAmount
+      bucket.miss.tokens += miss
+      bucket.miss.amount += missAmount
+      bucket.output.tokens += output
+      bucket.output.amount += outputAmount
+      bucket.records += 1
+      bucket.quota += quota
+      bucket.tokens += hit + miss + output
+      bucket.amount += amount
+      pricedQuota += quota
+    }
+    models.set(model, entry)
+  }
+
+  // Derive both currencies once per bucket and per model, from the table unit.
+  for (const bucket of [buckets.peak, buckets.offpeak]) {
+    for (const kind of ['hit', 'miss', 'output']) {
+      bucket[kind].usd = toUsd(bucket[kind].amount)
+      bucket[kind].cny = toCny(bucket[kind].amount)
+    }
+    bucket.usd = toUsd(bucket.amount)
+    bucket.cny = toCny(bucket.amount)
+  }
+  for (const entry of models.values()) {
+    entry.usd = toUsd(entry.amount)
+    entry.cny = toCny(entry.amount)
+  }
+
+  const modelRows = [...models.values()].sort((left, right) => (right.amount - left.amount) || (right.records - left.records))
+  const unpriced = modelRows.filter((entry) => !entry.priced)
+  const usedAmount = buckets.peak.amount + buckets.offpeak.amount
+  const usedTokens = buckets.peak.tokens + buckets.offpeak.tokens
+
+  // The quota endpoint is the only source of the whole-quota denominator, so it
+  // is read here rather than trusted from the page. One price edit re-runs this
+  // function, so the read is cached for a minute per job: a keyboard must not
+  // turn into a request storm on the gateway.
+  let quotaSection = null
+  let quotaError = null
+  const cached = job.quotaCache
+  if (cached !== undefined && Date.now() - cached.at < 60_000) {
+    quotaSection = cached.section
+    quotaError = cached.error
+  } else {
+    try {
+      const raw = envelope(await gatewayGet(job.baseUrl, '/api/usage/token/', job.token), 'quota')
+      quotaSection = pickFields(raw.data, QUOTA_FIELDS)
+    } catch (error) {
+      quotaError = messageOf(error)
+    }
+    job.quotaCache = { at: Date.now(), section: quotaSection, error: quotaError }
+  }
+
+  const totalGranted = isNumber(quotaSection?.total_granted) ? quotaSection.total_granted : null
+  const totalUsed = isNumber(quotaSection?.total_used) ? quotaSection.total_used : null
+  const totalAvailable = isNumber(quotaSection?.total_available) ? quotaSection.total_available : null
+  const delta = totalUsed === null || job.range !== null ? null : totalUsed - allQuota
+  const tolerance = totalUsed === null ? 0 : Math.max(1, Math.abs(totalUsed) * 0.02)
+  // A windowed walk covers a slice of the log, so its quota can never equal the
+  // lifetime `total_used`: comparing them would be a false alarm, not a check.
+  const ranged = job.range !== null
+  const reconciled = ranged ? null : (delta !== null && Math.abs(delta) <= tolerance)
+
+  const extrapolate = (target) => (pricedQuota > 0 && target !== null ? (usedAmount * target) / pricedQuota : null)
+  const grantedAmount = extrapolate(totalGranted)
+  const remainingAmount = extrapolate(totalAvailable)
+  const money = (amount) => ({
+    amount,
+    usd: amount === null ? null : toUsd(amount),
+    cny: amount === null ? null : toCny(amount),
+  })
+
+  // Capped means a local guard stopped the walk; an early stop at the windows edge does not.
+  const status = job.phase === 'complete' && job.capped !== true
+  return {
+    status: {
+      phase: job.phase,
+      message: job.message,
+      range: job.range,
+      pages: job.pages,
+      scanned: job.scanned,
+      collected: job.rows.length,
+      duplicates: job.duplicates,
+      conflicts: job.conflicts,
+      serverTotal: job.serverTotal,
+      complete: status,
+    },
+    counts: { consumption, failures, others, peakRecords: buckets.peak.records, offpeakRecords: buckets.offpeak.records },
+    buckets,
+    totals: { amount: usedAmount, usd: toUsd(usedAmount), cny: toCny(usedAmount), tokens: usedTokens },
+    models: modelRows,
+    unpriced: {
+      models: unpriced.map((entry) => entry.model),
+      records: unpriced.reduce((sum, entry) => sum + entry.records, 0),
+    },
+    quota: {
+      error: quotaError,
+      totalGranted,
+      totalUsed,
+      totalAvailable,
+      logQuota: allQuota,
+      pricedQuota,
+      delta,
+      reconciled,
+      ranged,
+    },
+    extrapolation: {
+      granted: money(grantedAmount),
+      remaining: money(remainingAmount),
+      // Every guess that makes the extrapolation provisional, reported as plain
+      // facts so the page can word them in the reader's language.
+      provisional: {
+        incomplete: !status,
+        unpriced: unpriced.reduce((sum, entry) => sum + entry.records, 0),
+        quota: quotaSection === null,
+        mismatch: !ranged && quotaSection !== null && reconciled === false,
+        ranged,
+      },
+    },
+    rate,
+    currency,
+    holidays: holidays.size,
+    computedAt: new Date().toISOString(),
+  }
+}
+
 /* ------------------------------------------------------------------- service */
 
 /**
@@ -373,6 +887,31 @@ export function apply(ctx) {
   /** In-memory session jobs, keyed by id; nothing here is persisted. */
   const jobs = new Map()
   let nextJobId = 0
+
+  /** The last successfully parsed official price table, and when it was read. */
+  let pricingCache = null
+
+  /**
+   * The official price table, from cache when it is fresh.
+   *
+   * The page is public and changes rarely, so one read serves every panel for
+   * six hours; a failure is never cached, so the next click retries.
+   * @param force - re-read even when the cached copy is still fresh.
+   */
+  const officialPricing = async (force) => {
+    if (!force && pricingCache !== null && Date.now() - pricingCache.at < PRICING_TTL_MS) {
+      return pricingCache.value
+    }
+    const parsed = parsePricingMarkdown(await fetchPricingText(PRICING_URL))
+    const value = {
+      source: PRICING_URL,
+      fetchedAt: new Date().toISOString(),
+      currency: parsed.currency,
+      models: parsed.models,
+    }
+    pricingCache = { at: Date.now(), value }
+    return value
+  }
 
   /** The credential service is optional: without it the page says so. */
   const credentialsOf = () => {
@@ -500,8 +1039,8 @@ export function apply(ctx) {
     return result
   }
 
-  /** Create one collection job and start it; the page polls its status. */
-  const startAnalysis = (range, settings, token) => {
+  /** Create one collection job; `range === null` means "walk the whole history". */
+  const newJob = (range, settings, token) => {
     const id = (nextJobId += 1)
     const now = new Date().toISOString()
     const job = {
@@ -529,6 +1068,19 @@ export function apply(ctx) {
       const oldest = [...jobs.keys()].sort((a, b) => a - b)[0]
       if (oldest !== undefined && oldest !== id) jobs.delete(oldest)
     }
+    return job
+  }
+
+  /** Create one collection job and start it; the page polls its status. */
+  const startAnalysis = (range, settings, token) => {
+    const job = newJob(range, settings, token)
+    void collect(job)
+    return job
+  }
+
+  /** Create one priced walk; `range === null` means "every page of history". */
+  const startWalk = (settings, token, range) => {
+    const job = newJob(range, settings, token)
     void collect(job)
     return job
   }
@@ -555,6 +1107,7 @@ export function apply(ctx) {
       conflicts: job.conflicts,
       outside: job.outside,
       serverTotal: job.serverTotal,
+      capped: job.capped === true,
       actualStart,
       actualEnd,
     }
@@ -580,12 +1133,36 @@ export function apply(ctx) {
       job.duplicates += 1
       return
     }
-    if (createdAt < job.range.start || createdAt >= job.range.end) {
+    // `range` is null for a whole-history walk, which keeps every window.
+    if (job.range !== null && (createdAt < job.range.start || createdAt >= job.range.end)) {
       job.outside += 1
       return
     }
     job.seen.set(id, job.rows.length)
     job.rows.push(row)
+  }
+
+  /**
+   * One page, re-requested on failure.
+   *
+   * A long walk is tens of requests deep, so a single hiccup would otherwise
+   * throw away everything collected so far; two retries with a growing pause
+   * ride out a blip, and the third failure is reported as the walk's reason.
+   */
+  const fetchPageWithRetry = async (job, page) => {
+    let lastError
+    for (let attempt = 1; attempt <= PAGE_ATTEMPTS; attempt += 1) {
+      try {
+        return await fetchLogPage(job.baseUrl, job.token, page, ANALYSIS_PAGE_SIZE)
+      } catch (error) {
+        lastError = error
+        if (job.cancelRequested) break
+        job.updatedAt = new Date().toISOString()
+        await sleep(700 * attempt)
+      }
+    }
+    const reason = messageOf(lastError)
+    throw new Error(`第 ${page} 页连续 ${PAGE_ATTEMPTS} 次请求失败：${reason}`)
   }
 
   /** Walk every page until the range is exhausted, cancelled, or capped. */
@@ -599,6 +1176,7 @@ export function apply(ctx) {
           return
         }
         if (job.pages >= ANALYSIS_MAX_PAGES || job.rows.length >= ANALYSIS_MAX_RECORDS) {
+          job.capped = true
           finish(job, 'complete', '已达本机保护上限（20000 页 / 200000 条），结果可能不完整')
           return
         }
@@ -606,7 +1184,7 @@ export function apply(ctx) {
           finish(job, 'failed', '采集超过 30 分钟保护上限，已停止')
           return
         }
-        const pageData = await fetchLogPage(job.baseUrl, job.token, page, ANALYSIS_PAGE_SIZE)
+        const pageData = await fetchPageWithRetry(job, page)
         if (job.cancelRequested) {
           finish(job, 'cancelled', null)
           return
@@ -614,8 +1192,24 @@ export function apply(ctx) {
         job.pages += 1
         job.scanned += pageData.items.length
         if (Number.isInteger(pageData.total)) job.serverTotal = pageData.total
+        // The gateway serves the newest page first. Detecting that order lets a
+        // ranged walk stop as soon as a page is entirely older than the window,
+        // instead of paging through the whole history to find nothing.
+        if (job.pages === 1 && pageData.items.length > 1) {
+          const first = pageData.items[0].created_at
+          const last = pageData.items[pageData.items.length - 1].created_at
+          job.descending = first >= last
+        }
         for (const row of pageData.items) ingest(job, row)
         job.updatedAt = new Date().toISOString()
+        if (job.range !== null && job.descending === true && pageData.items.length > 0
+          && pageData.items.every((row) => row.created_at < job.range.start)) {
+          // Everything inside the window has been read: this is a complete walk,
+          // not a truncated one, even though it stopped before the last page.
+          job.capped = false
+          finish(job, 'complete', '已翻到范围之前的数据，提前结束')
+          return
+        }
         // A short page is the only reliable end-of-data signal the gateway gives.
         if (pageData.items.length < ANALYSIS_PAGE_SIZE) {
           finish(job, 'complete', null)
@@ -633,7 +1227,7 @@ export function apply(ctx) {
   const jobOf = (raw) => {
     const id = Number(raw?.id)
     const job = jobs.get(id)
-    if (job === undefined) throw new Error('分析任务不存在或已过期，请重新采集')
+    if (job === undefined) throw new Error('采集任务不存在或已过期，请重新采集')
     return job
   }
 
@@ -815,6 +1409,37 @@ export function apply(ctx) {
       if (method === 'POST' && path === '/analysis/details') {
         const body = await readJson(req)
         reply(res, analysisDetails(jobOf(body), normalizeQuery(body), body))
+        return
+      }
+      if (method === 'POST' && path === '/value/start') {
+        const range = normalizeValueRange(await readJson(req))
+        const settings = await settingsOf()
+        const token = await tokenOf()
+        reply(res, statusOf(startWalk(settings, token, range)))
+        return
+      }
+      if (method === 'GET' && path === '/value/status') {
+        reply(res, statusOf(jobOf({ id: query.get('id') })))
+        return
+      }
+      if (method === 'POST' && path === '/value/cancel') {
+        const job = jobOf(await readJson(req))
+        job.cancelRequested = true
+        if (job.pages === 0 && job.phase === 'running') finish(job, 'cancelled', null)
+        reply(res, statusOf(job))
+        return
+      }
+      if (method === 'POST' && path === '/value/result') {
+        const body = await readJson(req)
+        reply(res, await valueResult(jobOf(body), body))
+        return
+      }
+      if (method === 'POST' && path === '/value/prices') {
+        reply(res, await officialPricing(true))
+        return
+      }
+      if (method === 'GET' && path === '/value/prices') {
+        reply(res, await officialPricing(false))
         return
       }
       sendJson(res, 404, { ok: false, error: '未知接口' })

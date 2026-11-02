@@ -24,7 +24,7 @@ AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
    - 仍然失败就 git clone https://github.com/hustwxw/dsh-ai-quota 到本地，
      再把 target 换成该目录的绝对路径重装。
    - 绝对不要安装 0.0.0-stage——那是 npm 自动生成的空壳占位包，装了侧边栏什么都不会出现。
-     应该装 latest（当前 0.3.3）。
+     应该装 latest（当前 0.6.0）。
 3) 装完提示我刷新 Web UI，并确认侧边栏出现「AI 额度」图标（位置在「插件 / 自动化任务」之后）。
    你可以用 cordis_inspect_query（platform = client，provider = Slots，method = listSubTree，
    root = main）确认里面有没有 key = ai-quota-panel 的条目。
@@ -45,7 +45,7 @@ AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
 
 ---
 
-把公司 AI 额度网关（基于 [New API](https://github.com/Calcium-Ion/new-api)）做成 Harness Web UI 里的常驻面板：侧边栏那一行直接显示剩余额度百分比，点图标即刷新；点进去可以看额度概览、模型限制、分页调用记录、模型计费，以及按时间范围做的调用分析与钻取。
+把公司 AI 额度网关（基于 [New API](https://github.com/Calcium-Ion/new-api)）做成 Harness Web UI 里的常驻面板：侧边栏那一行直接显示剩余额度百分比，点图标即刷新；点进去可以看额度概览、模型限制、分页调用记录、模型计费、按时间范围做的调用分析与钻取，以及按官方价目估算的**用量价值**（已用多少钱、全部配额值多少钱、还剩多少钱）。
 
 - 界面在浏览器里（React + 主题变量，**不依赖任何 Harness 客户端包**），数据由 Harness 的 Host 进程直连内网网关。
 - skey 只存进本机凭据库（Harness `credentials`），**不写浏览器存储、不回传页面**——页面只知道「已配置 / 未配置」。
@@ -94,6 +94,7 @@ AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
 
 | 标签页 | 内容 |
 | --- | --- |
+| **用量价值** | 默认打开的第一个标签页：已用价值、全部配额估算、剩余配额估算、配额对账**置顶**，下面是分项估算与模型明细，采集与价目设置沉在底部 |
 | 连接设置 | 服务器地址、skey 保存 / 从环境变量 `AI_QUOTA_SKEY` 导入 / 清除凭据 |
 | 概览 | 总额度、已用、剩余、占比、到期时间（`expires_at <= 0` 显示「暂无限制」）、令牌名、模型限制开关与逐模型上限 |
 | 模型与计费 | `/v1/models` 的模型清单与端点类型；`/api/pricing` 的价格表与分组倍率 |
@@ -102,6 +103,31 @@ AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
 | 版本历史 | 每个版本改了什么 |
 
 调用分析是「采集 + 本地聚合」：Host 从第 1 页顺着翻，直到拿到不满 50 条的页为止（网关唯一的结束信号），按 `id` 去重并统计范围外/重复/冲突条数，再按粒度和时区聚合。保护上限 20000 页 / 200000 条 / 30 分钟，触顶时状态行会说明结果可能不完整。
+
+## 用量价值
+
+这一页跟 `deepseek-usage-value` skill 同一套算法，只是搬进了面板：面板自动采集、自动重算，不用每次手跑脚本。
+
+| 环节 | 规则 |
+| --- | --- |
+| 采集范围 | 默认「全部时间」翻完所有页；取消勾选可按日期范围采集（UTC+8、最长 366 天）。网关分页是新到旧，翻到整页都比范围更早即**提前结束**（两天范围实测 24 页收工，全量 92 页）；触到本机上限才算「不完整」 |
+| 只算消费 | 日志 `type = 2` 才计价；`type = 4 / 5`（失败请求）与其他记录分开统计，不重复计费 |
+| 三段 token | 命中 = `cache_tokens`（缺失时用 `cached_tokens`，都没有按 0）；未命中 = `输入 − 命中`（命中大于输入直接报错停止）；输出 = `completion_tokens`。`cache_write_tokens` 不叠加进输入 |
+| 高峰判定 | 工作日且 UTC 01:00–04:00、06:00–10:00 → 高峰价；其余时段、周末、你列出的法定节假日 → 优惠价 |
+| 计价 | `(命中×命中价 + 未命中×未命中价 + 输出×输出价) ÷ 1,000,000`，每个模型用自己的价目，查不到价格的模型单独列出、绝不套用别的模型价 |
+| 模板价 | 未知型号可点「按模板补价」起草（借 Flash / V4-Pro 的价目），但那一行会挂「模板价，待核对」标签，改一个数字即摘掉——借用别人的费率必须写在脸上 |
+| 重试 | 每页最多请求 3 次（间隔 700ms / 1400ms）再判失败：几十页的长跑不该被一次网络抖动清空 |
+| 汇率 | 由「价目货币」决定口径：价目是元时人民币列就是价目本身、汇率只换算美元列；价目是美元时才反过来。默认 6.66（2026-11-02 公开市场价：open.er-api 6.6609 / exchangerate-api 6.66 / ECB 10-30 交叉 6.6529；同日 CFETS 中间价 6.7146） |
+| 价目来源 | 内置快照 **official-2026-11-02**，官方人民币价目：`deepseek-flash` 高峰 0.04 / 2 / 8、空闲 0.02 / 1 / 4；`deepseek-v4-pro` 高峰 0.30 / 9 / 27、空闲 0.15 / 4.5 / 13.5。点「从官网更新价目」由 Host 实时读官方 Markdown 价目页解析，成功即替换并标注抓取时间，失败保留当前价目并显示原因；存着旧快照会被新快照替换（版本号变化即迁移） |
+| 官方口径 | 空闲价 = 高峰价的一半；高峰为北京时间工作日 09:00–12:00、14:00–18:00（= UTC 01–04 / 06–10，与 Host 判定一致）；旧型号名 `deepseek-v4-flash*` 按 Flash 计价（官方脚注） |
+| 对账 | 日志里消费记录的 `quota` 之和 vs `/api/usage/token/` 的 `total_used`，差 2% 以上标不一致。**按日期范围采集时不做对账**（一段范围的额度天生不等于 lifetime `total_used`），外推一律标「暂定值」并说明原因 |
+| 外推 | 已用价值 × `total_granted` ÷ 日志已用配额；剩余同理用 `total_available`。分页不完整、有未计价模型、配额接口失败或对账不一致 → 全部标「暂定值」并逐条说明原因 |
+
+价目、汇率、节假日都存在**本浏览器** `localStorage`（`dsh-ai-quota/value-v1`），不进凭据库、不上传。
+
+面板对网关只调用四个只读接口（`/api/usage/token/`、`/v1/models`、`/api/pricing`、`/api/log/token`），不改额度、不动配置；唯一的对外请求是「从官网更新价目」时读 `api-docs.deepseek.com/zh-cn/quick_start/pricing.md`。
+
+真实网关对过一遍：同一个 token，插件这边 89 页 / 4436 条采集完成，非高峰 token 合计 `145,208,707` 与 `deepseek-usage-value` 脚本逐位相同，失败记录 101 = 101，配额对账差 0.075%（一致性阈值内）；官方价目页也实测解析出 `deepseek-flash` / `deepseek-v4-pro` 两个模型、CNY 口径，与内置快照一致。
 
 ## 安装
 
@@ -127,7 +153,14 @@ git clone https://github.com/hustwxw/dsh-ai-quota.git
 plugin_manager  install_bundle  target = <克隆目录的绝对路径>
 ```
 
-开发时改动 `client.js` 后刷新页面即可生效；改动 `index.js`（Host 半）需要重启 Harness。装了依赖的 pnpm store 里 React 18 时，`npm test` 里的渲染测试才会真正跑，否则自动 SKIP。
+开发时改动 `client.js` 后刷新页面即可生效；改动 `index.js`（Host 半）需要重启 Harness。装了依赖的 pnpm store 里 React 18 时，`npm test` 里的渲染测试与 DOM 测试才会真正跑，否则自动 SKIP：
+
+```powershell
+$env:DSH_NODE_MODULES = "F:\AI\deepseek-harness\deepseek-harness\node_modules"   # 任何带 react18 + jsdom 的 node_modules
+npm test
+```
+
+测试分五层：`host-test.mjs` 用假网关跑真 Host（含价值估算、CNY/USD 口径与对账）、`pricing-test.mjs` 拿官方价目页样本喂解析器（含 4 种拒绝场景）、`locale-check.cjs` 校验中英文字典键、`render-test.mjs` 用 React 18 服务端渲染每个标签页、`value-dom-test.mjs` 在 jsdom 里把「采集 → 估价 → 渲染 → 改汇率重算 → 抓官网价目 → 迁移旧快照」整条链路走一遍。
 
 不想手打命令？把[文首那段提示词](#-一键安装把下面整段复制给你的-dsh)直接发给对方的 DSH，它会自己装完并验证。
 

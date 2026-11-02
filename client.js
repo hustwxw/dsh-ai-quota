@@ -161,6 +161,100 @@ window.__ModuleLoader__.load({
       'analysis.detailCount': '共 {total} 条',
       'analysis.reset': '返回全部',
       'analysis.other': '其他 {count} 个模型',
+      'tab.value': '用量价值',
+      'value.sub': '只对消费记录（type=2）按你自己填的价目估算；失败、退款与充值记录不计价，缺价的模型单独列出。',
+      'value.range': '时间范围与采集',
+      'value.allTime': '全部时间',
+      'value.from': '开始日期',
+      'value.to': '结束日期',
+      'value.rangeHintAll': '勾上「全部时间」就翻完所有页；取消勾选只采集这两个日期之间（按 UTC+8 计），范围采集不做配额对账。',
+      'value.wholeHistory': '全部历史',
+      'value.window': '范围 {from} → {to}',
+      'value.badRange': '日期范围不正确：开始不能晚于结束，最长 366 天。',
+      'value.whyRanged': '这是按日期范围的采集：不与 total_used 对账，外推按这段范围的比例估算，标为暂定。',
+      'value.reconcileRanged': '按日期范围采集，不做对账',
+      'value.collect': '采集全量日志',
+      'value.collecting': '采集中…',
+      'value.recollect': '重新采集',
+      'value.cancel': '取消采集',
+      'value.needCollect': '点「采集全量日志」逐页回读调用记录后再估算。',
+      'value.progress': '已扫描 {scanned} 条，命中 {collected} 条，共 {pages} 页',
+      'value.complete': '已读到末页，分页完整',
+      'value.incomplete': '分页不完整：金额只覆盖已读到的记录',
+      'value.serverTotal': '服务器报告共 {total} 条',
+      'value.counts': '消费 {consumption} 条 · 失败 {errors} 条 · 其他 {other} 条',
+      'value.usedValue': '已用价值',
+      'value.grantedValue': '全部配额估算',
+      'value.remainingValue': '剩余配额估算',
+      'value.provisional': '暂定值',
+      'value.reconcile': '配额对账',
+      'value.reconcileOk': '日志配额与 total_used 对得上',
+      'value.reconcileBad': '日志配额与 total_used 差 {delta}',
+      'value.reconcileNone': '没取到配额接口，无法对账',
+      'value.table': '分项估算',
+      'value.period': '时段',
+      'value.kind': '用量类型',
+      'value.tokens': 'Token 数',
+      'value.usd': '估算美元',
+      'value.cny': '估算人民币',
+      'value.peak': '高峰',
+      'value.offpeak': '非高峰',
+      'value.hit': '输入缓存命中',
+      'value.miss': '输入缓存未命中',
+      'value.output': '输出',
+      'value.subtotal': '{period}小计',
+      'value.usedTotal': '已用合计',
+      'value.grantedRow': '全部配额估算',
+      'value.remainingRow': '剩余配额估算',
+      'value.models': '模型明细',
+      'value.records': '消费记录',
+      'value.quota': '配额',
+      'value.unpricedTag': '缺价',
+      'value.noModels': '还没有采集到模型',
+      'value.prices': '价目表',
+      'value.pricesHint': '高峰：工作日 UTC 01:00–04:00、06:00–10:00；其余时段、周末与你列出的节假日按优惠价。',
+      'value.pricePeak': '高峰价',
+      'value.priceOffpeak': '优惠价',
+      'value.priceHit': '命中',
+      'value.priceMiss': '未命中',
+      'value.priceOutput': '输出',
+      'value.priceMissing': '这 {count} 个模型没有价格，金额里没有它们：{models}',
+      'value.templateTag': '模板价，待核对',
+      'value.fillPrice': '按模板补价',
+      'value.resetPrices': '恢复默认价目',
+      'value.rate': 'USD/CNY 汇率',
+      'value.rateHint': '默认 {rate}（2026-11-02 公开市场汇率；CFETS 当日中间价 6.7146，差 0.8%）。价目是元时它只影响美元那列，改它不会动人民币金额。',
+      'value.currency': '价目货币',
+      'value.currencyCny': '人民币（元）',
+      'value.currencyUsd': '美元（$）',
+      'value.currencyHint': '官方价目用元；选美元时汇率才参与人民币换算',
+      'value.priceUnit': '{unit} / 百万 token',
+      'value.fetchPrices': '从官网更新价目',
+      'value.fetchingPrices': '抓取中…',
+      'value.priceFetched': '已采用官网价目，更新 {count} 个模型（抓取于 {time}）',
+      'value.priceSourceSnapshot': '内置快照 {version}',
+      'value.priceSourceLive': '官网价目，抓取于 {time}',
+      'value.priceSourceFailed': '官网价目抓取失败，当前价目未变：{error}',
+      'value.holidays': '法定节假日（按非高峰价）',
+      'value.holidaysHint': '填 YYYY-MM-DD，逗号或换行分隔；留空表示只按周末判非高峰。',
+      'value.whyIncomplete': '分页不完整（未读到末页或触到本机上限），外推只是暂定。',
+      'value.whyUnpriced': '有 {count} 条消费记录的模型没有价格，未计入金额，外推为暂定。',
+      'value.whyQuota': '没有取到配额接口，无法外推全部配额。',
+      'value.whyMismatch': '日志配额与 total_used 差 {delta}，外推为暂定。',
+      'value.assumption': '算法：命中 = cache_tokens（缺失按 0），未命中 = 输入 − 命中，输出 = completion_tokens；价值 =（命中×命中价 + 未命中×未命中价 + 输出×输出价）÷ 1,000,000；外推 = 已用价值 × 目标配额 ÷ 日志已用配额。这是按标价估算的服务价值，不等于中转站实际结算金额。',
+      'value.source': '默认价目与汇率是录入值（2026-11-02 录入，汇率 6.66 取公开市场价；CFETS 当日中间价 6.7146），落地前请对照 DeepSeek 官网价格页；面板只读网关接口，不改额度。',
+      'value.computedAt': '估算于 {time}',
+      'value.empty': '没有可估算的消费记录',
+      'versions.sub': '本插件与桌面版 ai-quota-tauri 功能对齐。',
+      'versions.0.6.0.title': '数值置顶与日期范围',
+      'versions.0.6.0.date': '2026-11-02',
+      'versions.0.6.0.items': '「用量价值」提为第一个标签页并成为默认页、已用金额与分项明细提到最上方（采集/口径/价目沉到下面）、采集支持日期范围（取消「全部时间」选起止日期，按 UTC+8 计，最长 366 天）、范围采集不再误报配额不一致并明确标注暂定、网关按新到旧分页时翻到范围之前即提前结束',
+      'versions.0.5.0.title': '官方价目与价目货币',
+      'versions.0.5.0.date': '2026-11-02',
+      'versions.0.5.0.items': '内置价目换成官方人民币快照 official-2026-11-02（含 deepseek-flash 与 deepseek-v4-pro）、新增价目货币选择（元 / 美元；价目为元时汇率只影响美元列）、可从官网实时抓取价目（Host 读取 pricing.md 并解析，失败保留当前价目并报错）、未知型号按模板补价并挂「模板价，待核对」标签',
+      'versions.0.4.0.title': '用量价值面板',
+      'versions.0.4.0.date': '2026-11-02',
+      'versions.0.4.0.items': '新增「用量价值」标签页：全量回读调用记录、按高峰 / 非高峰拆分命中与未命中输入及输出、按模型价目估算美元与人民币、与 total_used 对账并外推全部配额与剩余配额价值、价目与汇率可改且只存本浏览器',
       'versions.sub': '本插件与桌面版 ai-quota-tauri 功能对齐。',
       'versions.0.3.0.title': '显示名称可配置',
       'versions.0.3.0.date': '2026-10-26',
@@ -312,7 +406,100 @@ window.__ModuleLoader__.load({
       'analysis.detailCount': '{total} records',
       'analysis.reset': 'Back to all',
       'analysis.other': '{count} other models',
+      'tab.value': 'Usage value',
+      'value.sub': 'Consumption records only (type=2), priced with the table you enter; failed, refunded and topped-up records are not priced, and models without a price are listed separately.',
+      'value.range': 'Date range and collection',
+      'value.allTime': 'All time',
+      'value.from': 'From',
+      'value.to': 'To',
+      'value.rangeHintAll': 'With All time ticked the walk reads every page; untick it to collect only the days between these dates (UTC+8). A windowed walk skips the quota reconciliation.',
+      'value.wholeHistory': 'all history',
+      'value.window': 'window {from} → {to}',
+      'value.badRange': 'That date range is not usable: the start must not be after the end, and the window may not exceed 366 days.',
+      'value.whyRanged': 'This is a windowed walk: it is not reconciled against total_used, and the extrapolation only scales this slice, so it stays provisional.',
+      'value.reconcileRanged': 'windowed walk, no reconciliation',
+      'value.collect': 'Collect the full log',
+      'value.collecting': 'Collecting…',
+      'value.recollect': 'Collect again',
+      'value.cancel': 'Stop collecting',
+      'value.needCollect': 'Collect the full log first — the estimate needs every page.',
+      'value.progress': '{scanned} scanned, {collected} kept, {pages} pages',
+      'value.complete': 'The last page was reached, so the walk is complete',
+      'value.incomplete': 'Pagination is incomplete: the amounts cover only the pages read',
+      'value.serverTotal': 'The server reports {total} records',
+      'value.counts': '{consumption} consumption · {errors} failures · {other} others',
+      'value.usedValue': 'Value used',
+      'value.grantedValue': 'Whole-quota estimate',
+      'value.remainingValue': 'Remaining-quota estimate',
+      'value.provisional': 'provisional',
+      'value.reconcile': 'Quota reconciliation',
+      'value.reconcileOk': 'The log quota matches total_used',
+      'value.reconcileBad': 'The log quota differs from total_used by {delta}',
+      'value.reconcileNone': 'The quota endpoint was not readable, so nothing reconciles',
+      'value.table': 'Breakdown',
+      'value.period': 'Period',
+      'value.kind': 'Usage type',
+      'value.tokens': 'Tokens',
+      'value.usd': 'Estimated USD',
+      'value.cny': 'Estimated CNY',
+      'value.peak': 'Peak',
+      'value.offpeak': 'Off-peak',
+      'value.hit': 'Input cache hit',
+      'value.miss': 'Input cache miss',
+      'value.output': 'Output',
+      'value.subtotal': '{period} subtotal',
+      'value.usedTotal': 'Used total',
+      'value.grantedRow': 'Whole-quota estimate',
+      'value.remainingRow': 'Remaining-quota estimate',
+      'value.models': 'Model detail',
+      'value.records': 'Consumption rows',
+      'value.quota': 'Quota',
+      'value.unpricedTag': 'no price',
+      'value.noModels': 'No model has been collected yet',
+      'value.prices': 'Price table',
+      'value.pricesHint': 'Peak is weekday 01:00–04:00 and 06:00–10:00 UTC; every other hour, weekends and the holidays you list use the off-peak price.',
+      'value.pricePeak': 'Peak rate',
+      'value.priceOffpeak': 'Off-peak rate',
+      'value.priceHit': 'Hit',
+      'value.priceMiss': 'Miss',
+      'value.priceOutput': 'Output',
+      'value.priceMissing': 'These {count} models have no price and are left out of the amounts: {models}',
+      'value.templateTag': 'template price, unverified',
+      'value.fillPrice': 'Fill from the template',
+      'value.resetPrices': 'Reset to defaults',
+      'value.rate': 'USD/CNY rate',
+      'value.rateHint': 'Defaults to {rate} (public market quote of 2026-11-02; CFETS central parity that day was 6.7146, 0.8% away). With a CNY table it only moves the USD column.',
+      'value.currency': 'Price unit',
+      'value.currencyCny': 'CNY (¥)',
+      'value.currencyUsd': 'USD ($)',
+      'value.currencyHint': 'The official page quotes CNY; USD is what makes the rate matter',
+      'value.priceUnit': '{unit} per million tokens',
+      'value.fetchPrices': 'Update from the official page',
+      'value.fetchingPrices': 'Fetching…',
+      'value.priceFetched': 'Adopted the official table, {count} models (fetched {time})',
+      'value.priceSourceSnapshot': 'bundled snapshot {version}',
+      'value.priceSourceLive': 'official page, fetched {time}',
+      'value.priceSourceFailed': 'Fetching the official page failed; the current table is unchanged: {error}',
+      'value.holidays': 'Public holidays (off-peak pricing)',
+      'value.holidaysHint': 'List YYYY-MM-DD values, comma or newline separated; empty means weekends are the only off-peak days.',
+      'value.whyIncomplete': 'Pagination is incomplete (no final short page, or a local cap was hit), so the extrapolation stays provisional.',
+      'value.whyUnpriced': '{count} consumption rows belong to models without a price, so they are outside the amounts and the extrapolation stays provisional.',
+      'value.whyQuota': 'The quota endpoint was not readable, so the whole quota cannot be extrapolated.',
+      'value.whyMismatch': 'The log quota differs from total_used by {delta}, so the extrapolation stays provisional.',
+      'value.assumption': 'Method: hit = cache_tokens (0 when absent), miss = input − hit, output = completion_tokens; value = (hit × hit rate + miss × miss rate + output × output rate) ÷ 1,000,000; extrapolation = value used × target quota ÷ log quota used. This is the value of the service at list price, not what the relay actually settled.',
+      'value.source': 'The default prices and rate are entered values (entered 2026-11-02; the rate 6.66 is a public market quote, while CFETS\' central parity that day was 6.7146) — check the prices against the DeepSeek pricing page before relying on them. The panel only reads gateway endpoints and never changes a quota.',
+      'value.computedAt': 'Computed {time}',
+      'value.empty': 'There is no consumption record to price',
       'versions.sub': 'This plugin matches the desktop ai-quota-tauri feature set.',
+      'versions.0.6.0.title': 'Numbers first, and a date range',
+      'versions.0.6.0.date': '2026-11-02',
+      'versions.0.6.0.items': 'Usage value is now the first and default tab, the spend and the breakdown sit at the top (collection, units and the price table moved below), collection accepts a date range (untick All time, UTC+8, at most 366 days), a windowed walk no longer reports a false quota mismatch and is labelled provisional, and a newest-first gateway ends the walk as soon as a page falls entirely before the window',
+      'versions.0.5.0.title': 'Official prices and a price unit',
+      'versions.0.5.0.date': '2026-11-02',
+      'versions.0.5.0.items': 'The bundled table is now the official RMB snapshot official-2026-11-02 (deepseek-flash and deepseek-v4-pro included), a price-unit selector (CNY / USD; with a CNY table the rate only moves the USD column), one-click fetch of the live official page (the Host reads and parses pricing.md, and keeps the current table with a reason when the fetch fails), and template rates for unknown models flagged unverified',
+      'versions.0.4.0.title': 'Usage-value panel',
+      'versions.0.4.0.date': '2026-11-02',
+      'versions.0.4.0.items': 'New Usage value tab: walks the whole call log, splits cache-hit and cache-miss input plus output across peak and off-peak, prices them per model in USD and CNY, reconciles against total_used, extrapolates the whole-quota and remaining-quota value, and keeps the price table and rate editable in this browser',
       'versions.0.3.0.title': 'Configurable display name',
       'versions.0.3.0.date': '2026-10-26',
       'versions.0.3.0.items': 'The Connection tab sets the display name used by the sidebar row and the panel title (default "AI Quota", stored in this browser only); the name and the percentage share one row; a rename applies at once',
@@ -545,6 +732,12 @@ window.__ModuleLoader__.load({
       '.aq-kv dd{margin:0;word-break:break-all;font-variant-numeric:tabular-nums}',
       '.aq-section{margin-top:16px}',
       '.aq-section:first-child{margin-top:0}',
+      '.aq-price-box{border:.5px solid var(--dsw-alias-border-l1);border-radius:8px;padding:8px 10px;margin-top:8px}',
+      '.aq-price-name{font-size:12px;font-weight:600;margin-bottom:6px;word-break:break-all}',
+      '.aq-price-grid{display:grid;grid-template-columns:74px repeat(3,minmax(64px,1fr));gap:6px;align-items:center}',
+      '.aq-price-grid .aq-input{height:28px;font-size:12px;padding:0 6px}',
+      '.aq-price-tag{font-size:12px;color:var(--dsw-alias-label-secondary);white-space:nowrap}',
+      '.aq-bold{font-weight:600}',
     ].join('');
 
     /* -------------------------------------------------------------------- atoms */
@@ -1476,6 +1669,749 @@ window.__ModuleLoader__.load({
         h(Note, { style: { marginTop: '10px' } }, t('analysis.sub')));
     }
 
+    /* ------------------------------------------------------------------- value */
+
+    /**
+     * The bundled price table: a dated snapshot of the official page, used
+     * until the Host re-reads that page.
+     *
+     * Source: https://api-docs.deepseek.com/zh-cn/quick_start/pricing.md, read
+     * 2026-11-02. Amounts are RMB per million tokens; off-peak is half of peak,
+     * and peak is Beijing time 09:00-12:00 / 14:00-18:00 on weekdays — the same
+     * window the Host buckets on. Per footnote (1) of that page the old
+     * `deepseek-v4-flash*` names are billed at Flash rates.
+     */
+    const PRICE_SNAPSHOT = {
+      version: 'official-2026-11-02',
+      url: 'https://api-docs.deepseek.com/zh-cn/quick_start/pricing.md',
+      currency: 'CNY',
+      models: {
+        'deepseek-flash': {
+          peak: { hit: 0.04, miss: 2, output: 8 },
+          offpeak: { hit: 0.02, miss: 1, output: 4 },
+        },
+        'deepseek-v4-pro': {
+          peak: { hit: 0.3, miss: 9, output: 27 },
+          offpeak: { hit: 0.15, miss: 4.5, output: 13.5 },
+        },
+        'deepseek-v4-flash': {
+          peak: { hit: 0.04, miss: 2, output: 8 },
+          offpeak: { hit: 0.02, miss: 1, output: 4 },
+        },
+        'deepseek-v4-flash-vision-exp': {
+          peak: { hit: 0.04, miss: 2, output: 8 },
+          offpeak: { hit: 0.02, miss: 1, output: 4 },
+        },
+      },
+    };
+    /** Rate, holidays and prices are per-browser preferences, not credentials. */
+    const VALUE_STORAGE_KEY = 'dsh-ai-quota/value-v1';
+    /**
+     * USD/CNY, which only matters when the table itself is quoted in USD — the
+     * bundled snapshot is RMB, so the CNY column is exact for it. Read on
+     * 2026-11-02 from public quotes (open.er-api 6.6609, exchangerate-api 6.66,
+     * ECB 2026-10-30 cross 6.6529); CFETS' parity that day was 6.7146.
+     */
+    const DEFAULT_RATE = 6.66;
+    /** Where the prices on screen came from, for the source line. */
+    const SNAPSHOT_SOURCE = { kind: 'snapshot', version: PRICE_SNAPSHOT.version, url: PRICE_SNAPSHOT.url };
+
+    /** A copy of a price table: two buckets of three numbers per model. */
+    function clonePrices(table) {
+      const copy = {};
+      for (const model of Object.keys(table)) {
+        const entry = table[model];
+        copy[model] = { peak: Object.assign({}, entry.peak), offpeak: Object.assign({}, entry.offpeak) };
+        // A model seeded from the template keeps that admission until it is edited.
+        if (entry.template === true) copy[model].template = true;
+      }
+      return copy;
+    }
+
+    /** True when `value` has the shape the Host's price validation accepts. */
+    function isPriceTable(value) {
+      if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+      for (const model of Object.keys(value)) {
+        const entry = value[model];
+        if (entry === null || typeof entry !== 'object') return false;
+        for (const bucket of ['peak', 'offpeak']) {
+          const triple = entry[bucket];
+          if (triple === null || typeof triple !== 'object') return false;
+          for (const field of ['hit', 'miss', 'output']) {
+            const number = triple[field];
+            if (typeof number !== 'number' || !Number.isFinite(number) || number < 0) return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    /** The stored preferences; any broken field falls back to its default. */
+    function readValueSettings() {
+      const fallback = {
+        rate: DEFAULT_RATE,
+        holidays: '',
+        currency: PRICE_SNAPSHOT.currency,
+        prices: clonePrices(PRICE_SNAPSHOT.models),
+        source: SNAPSHOT_SOURCE,
+      };
+      try {
+        const store = typeof window !== 'undefined' ? window.localStorage : undefined;
+        if (store === undefined || store === null) return fallback;
+        const raw = store.getItem(VALUE_STORAGE_KEY);
+        if (typeof raw !== 'string' || raw.length === 0) return fallback;
+        const parsed = JSON.parse(raw);
+        if (parsed === null || typeof parsed !== 'object') return fallback;
+        const source = parsed.source !== null && typeof parsed.source === 'object' && typeof parsed.source.kind === 'string'
+          ? parsed.source
+          : null;
+        // A stored table that came from an older bundled snapshot is replaced:
+        // keeping it would hide a model the new snapshot knows (that is exactly
+        // how deepseek-flash stayed "缺价" while an older table was in storage).
+        // A live table, or the current snapshot, is kept as it stands.
+        const stale = source === null || (source.kind === 'snapshot' && source.version !== PRICE_SNAPSHOT.version);
+        if (stale) return fallback;
+        return {
+          rate: typeof parsed.rate === 'number' && Number.isFinite(parsed.rate) ? parsed.rate : DEFAULT_RATE,
+          holidays: typeof parsed.holidays === 'string' ? parsed.holidays : '',
+          currency: parsed.currency === 'USD' ? 'USD' : 'CNY',
+          prices: isPriceTable(parsed.prices) ? parsed.prices : clonePrices(PRICE_SNAPSHOT.models),
+          source,
+        };
+      } catch {
+        return fallback;
+      }
+    }
+
+    /** Persist the preferences; a denied store only costs the memory. */
+    function writeValueSettings(state) {
+      try {
+        const store = typeof window !== 'undefined' ? window.localStorage : undefined;
+        if (store === undefined || store === null) return;
+        store.setItem(VALUE_STORAGE_KEY, JSON.stringify({
+          rate: state.rate,
+          holidays: state.holidays,
+          currency: state.currency,
+          prices: state.prices,
+          source: state.source,
+        }));
+      } catch {
+        // Private mode or a full quota: the table still applies to this page.
+      }
+    }
+
+    /**
+     * The starting table for a model name the reader has not priced yet. It is
+     * flagged `template` on purpose: a borrowed rate is a guess, and the panel
+     * has to say so rather than pass it off as this model's price.
+     */
+    function priceFor(model) {
+      const name = String(model || '').toLowerCase();
+      const template = name.includes('pro')
+        ? PRICE_SNAPSHOT.models['deepseek-v4-pro']
+        : PRICE_SNAPSHOT.models['deepseek-flash'];
+      return {
+        peak: Object.assign({}, template.peak),
+        offpeak: Object.assign({}, template.offpeak),
+        template: true,
+      };
+    }
+
+    /** One price cell, with the template filling in a model added mid-session. */
+    function priceCell(prices, model, bucket, field) {
+      const entry = prices[model];
+      if (entry === undefined || entry[bucket] === undefined) return priceFor(model)[bucket][field];
+      return entry[bucket][field];
+    }
+
+    /** The holiday input split into the `YYYY-MM-DD` list the Host validates. */
+    function holidayList(text) {
+      if (typeof text !== 'string') return [];
+      const days = [];
+      for (const entry of text.split(/[\s,，;；]+/)) {
+        if (entry.length === 0) continue;
+        if (days.indexOf(entry) === -1) days.push(entry);
+      }
+      return days;
+    }
+
+    /** Money with two decimals; an absent value reads as the placeholder. */
+    function moneyText(t, value) {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return t('common.none');
+      return value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    /**
+     * The usage-value tab: collect the whole log once, price it against the
+     * reader's own table, and show what was used, what the whole quota would be
+     * worth, and every assumption behind those two numbers.
+     */
+    function ValueTab(props) {
+      const t = props.t;
+      const enabled = props.enabled;
+      const [prefs, setPrefs] = useState(readValueSettings);
+      const [status, setStatus] = useState(null);
+      const [result, setResult] = useState(null);
+      const [busy, setBusy] = useState(false);
+      const [computing, setComputing] = useState(false);
+      const [error, setError] = useState('');
+      // What a half-typed number looks like while the field has focus: binding
+      // a controlled input straight to a number eats the "0." of "0.028".
+      const [draft, setDraft] = useState({});
+      const [fetching, setFetching] = useState(false);
+      const [priceError, setPriceError] = useState('');
+      const [priceNotice, setPriceNotice] = useState('');
+      const pollTimer = useRef(null);
+      const computeTimer = useRef(null);
+      const started = useRef(false);
+      // The walk covers every page when `allTime` is on, otherwise one date
+      // window (UTC+8, the way the reader thinks about days).
+      const initialRange = useMemo(() => presetRange(7, 480), []);
+      const [allTime, setAllTime] = useState(true);
+      const [from, setFrom] = useState(initialRange.from);
+      const [to, setTo] = useState(initialRange.to);
+
+      const rate = prefs.rate;
+      const holidays = prefs.holidays;
+      const prices = prefs.prices;
+      const currency = prefs.currency === 'USD' ? 'USD' : 'CNY';
+      const source = prefs.source === undefined ? SNAPSHOT_SOURCE : prefs.source;
+      const unit = currency === 'USD' ? 'US$' : '元';
+
+      const save = (patch) => {
+        const next = Object.assign({}, prefs, patch);
+        setPrefs(next);
+        writeValueSettings(next);
+      };
+
+      useEffect(() => () => {
+        if (pollTimer.current !== null) clearTimeout(pollTimer.current);
+        if (computeTimer.current !== null) clearTimeout(computeTimer.current);
+      }, []);
+
+      const poll = useCallback((id) => {
+        if (pollTimer.current !== null) clearTimeout(pollTimer.current);
+        pollTimer.current = setTimeout(async () => {
+          try {
+            const next = await api('/value/status?id=' + id);
+            setStatus(next);
+            if (next.phase === 'running') {
+              poll(id);
+              return;
+            }
+            setBusy(false);
+          } catch (failure) {
+            setError(failure.message);
+            setBusy(false);
+          }
+        }, 400);
+      }, []);
+
+      const start = useCallback(async () => {
+        setError('');
+        setResult(null);
+        setStatus(null);
+        setBusy(true);
+        let body = {};
+        if (!allTime) {
+          try {
+            body = dateRange(from, to, 480);
+          } catch {
+            setError(t('value.badRange'));
+            setBusy(false);
+            return;
+          }
+        }
+        try {
+          const next = await api('/value/start', { method: 'POST', body });
+          setStatus(next);
+          poll(next.id);
+        } catch (failure) {
+          setError(failure.message);
+          setBusy(false);
+        }
+      }, [poll, allTime, from, to, t]);
+
+      // The tab walks the log on its first visit: the number is the point, and
+      // a fresh walk is the only thing that produces it.
+      useEffect(() => {
+        if (!enabled || started.current) return;
+        started.current = true;
+        void start();
+      }, [enabled, start]);
+
+      const jobId = status !== null && status.phase !== 'running' ? status.id : null;
+
+      // Re-price whenever the finished walk, the table, the rate or the holiday
+      // list changes; a keystroke in a price cell must not fire one request each.
+      useEffect(() => {
+        if (jobId === null) return undefined;
+        if (computeTimer.current !== null) clearTimeout(computeTimer.current);
+        computeTimer.current = setTimeout(async () => {
+          setComputing(true);
+          setError('');
+          try {
+            setResult(await api('/value/result', {
+              method: 'POST',
+              body: { id: jobId, prices, rate, currency, holidays: holidayList(holidays) },
+            }));
+          } catch (failure) {
+            setError(failure.message);
+            setResult(null);
+          } finally {
+            setComputing(false);
+          }
+        }, 350);
+        return () => {
+          if (computeTimer.current !== null) clearTimeout(computeTimer.current);
+        };
+      }, [jobId, prices, rate, holidays, currency]);
+
+      const cancel = async () => {
+        if (status === null) return;
+        try {
+          setStatus(await api('/value/cancel', { method: 'POST', body: { id: status.id } }));
+        } catch (failure) {
+          setError(failure.message);
+        }
+      };
+
+      /**
+       * Re-read the official pricing page through the Host and adopt its table.
+       * A failure keeps the current numbers and says so: a stale table beats a
+       * blank one, but never a silent one.
+       */
+      const fetchPrices = async () => {
+        setFetching(true);
+        setPriceError('');
+        try {
+          const data = await api('/value/prices', { method: 'POST' });
+          const next = clonePrices(prices);
+          let added = 0;
+          for (const model of Object.keys(data.models)) {
+            next[model] = {
+              peak: Object.assign({}, data.models[model].peak),
+              offpeak: Object.assign({}, data.models[model].offpeak),
+            };
+            added += 1;
+          }
+          save({
+            prices: next,
+            currency: data.currency === 'USD' ? 'USD' : 'CNY',
+            source: { kind: 'live', url: data.source, fetchedAt: data.fetchedAt, version: null },
+          });
+          setPriceNotice(t('value.priceFetched', { count: added, time: stampText(data.fetchedAt) }));
+        } catch (failure) {
+          setPriceError(t('value.priceSourceFailed', { error: failure.message }));
+        } finally {
+          setFetching(false);
+        }
+      };
+
+      const missing = result !== null && result.unpriced !== undefined && Array.isArray(result.unpriced.models)
+        ? result.unpriced.models
+        : [];
+
+      const fillMissing = () => {
+        const next = clonePrices(prices);
+        for (const model of missing) {
+          if (typeof model !== 'string' || next[model] !== undefined) continue;
+          next[model] = priceFor(model);
+        }
+        save({ prices: next });
+      };
+
+      const setPrice = (model, bucket, field, value) => {
+        const next = clonePrices(prices);
+        if (next[model] === undefined) next[model] = priceFor(model);
+        const parsed = Number(value);
+        next[model][bucket][field] = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+        // Hand-entered numbers are the reader's own, so the template caveat goes.
+        delete next[model].template;
+        save({ prices: next });
+      };
+
+      /** True while a model's rates still come from the borrowed template. */
+      const isTemplate = (model) => {
+        const entry = prices[model];
+        return entry === undefined || entry.template === true;
+      };
+
+      /** One cell's text, kept verbatim while it is being typed. */
+      const editDraft = (key, text) => {
+        setDraft((previous) => Object.assign({}, previous, { [key]: text }));
+      };
+
+      /** Drop a cell's draft so it falls back to the committed number. */
+      const clearDraft = (key) => {
+        setDraft((previous) => {
+          if (previous[key] === undefined) return previous;
+          const next = Object.assign({}, previous);
+          delete next[key];
+          return next;
+        });
+      };
+
+      /** One price cell's draft key. */
+      const priceKeyOf = (model, bucket, field) => model + '|' + bucket + '|' + field;
+
+      /** The text a price cell shows: the draft while focused, else the number. */
+      const priceText = (model, bucket, field) => {
+        const key = priceKeyOf(model, bucket, field);
+        return draft[key] === undefined ? String(priceCell(prices, model, bucket, field)) : draft[key];
+      };
+
+      /** Keep the half-typed text, and commit as soon as it parses. */
+      const priceChange = (model, bucket, field, text) => {
+        editDraft(priceKeyOf(model, bucket, field), text);
+        if (text.trim().length === 0) return;
+        const parsed = Number(text);
+        if (Number.isFinite(parsed) && parsed >= 0) setPrice(model, bucket, field, parsed);
+      };
+
+      /** The rate field's text, kept verbatim while it is being typed. */
+      const rateText = draft.rate === undefined ? String(rate) : draft.rate;
+
+      /** Commit the rate only once it is a number the Host would accept. */
+      const rateChange = (text) => {
+        editDraft('rate', text);
+        if (text.trim().length === 0) return;
+        const parsed = Number(text);
+        if (Number.isFinite(parsed) && parsed >= 0.1 && parsed <= 100) save({ rate: parsed });
+      };
+
+      const editorModels = useMemo(() => {
+        const names = Object.keys(prices);
+        if (result !== null && Array.isArray(result.models)) {
+          for (const entry of result.models) {
+            const name = typeof entry.model === 'string' ? entry.model : '';
+            if (name.length === 0 || names.indexOf(name) !== -1) continue;
+            names.push(name);
+          }
+        }
+        return names;
+      }, [prices, result]);
+
+      const counts = result === null ? null : result.counts;
+      const buckets = result === null ? null : result.buckets;
+      const totals = result === null ? null : result.totals;
+      const quota = result === null ? null : result.quota;
+      const extrapolation = result === null ? null : result.extrapolation;
+
+      const tableRows = [];
+      if (buckets !== null) {
+        for (const period of [['peak', t('value.peak')], ['offpeak', t('value.offpeak')]]) {
+          const bucket = buckets[period[0]];
+          for (const kind of [['hit', t('value.hit')], ['miss', t('value.miss')], ['output', t('value.output')]]) {
+            const cell = bucket[kind[0]];
+            tableRows.push({
+              key: period[0] + '-' + kind[0],
+              value: {
+                period: period[1],
+                kind: kind[1],
+                tokens: numberText(t, cell.tokens),
+                usd: moneyText(t, cell.usd),
+                cny: moneyText(t, cell.cny),
+              },
+            });
+          }
+          tableRows.push({
+            key: period[0] + '-sub',
+            value: {
+              period: '',
+              kind: t('value.subtotal', { period: period[1] }),
+              tokens: numberText(t, bucket.tokens),
+              usd: moneyText(t, bucket.usd),
+              cny: moneyText(t, bucket.cny),
+            },
+          });
+        }
+      }
+      if (totals !== null && extrapolation !== null) {
+        tableRows.push({
+          key: 'used',
+          value: {
+            period: '',
+            kind: t('value.usedTotal'),
+            tokens: numberText(t, totals.tokens),
+            usd: moneyText(t, totals.usd),
+            cny: moneyText(t, totals.cny),
+          },
+        });
+        tableRows.push({
+          key: 'granted',
+          value: {
+            period: '',
+            kind: t('value.grantedRow'),
+            tokens: '—',
+            usd: moneyText(t, extrapolation.granted.usd),
+            cny: moneyText(t, extrapolation.granted.cny),
+          },
+        });
+        tableRows.push({
+          key: 'remaining',
+          value: {
+            period: '',
+            kind: t('value.remainingRow'),
+            tokens: '—',
+            usd: moneyText(t, extrapolation.remaining.usd),
+            cny: moneyText(t, extrapolation.remaining.cny),
+          },
+        });
+      }
+
+      const reasons = [];
+      if (extrapolation !== null && extrapolation.provisional !== null) {
+        const provisional = extrapolation.provisional;
+        if (provisional.ranged) reasons.push(t('value.whyRanged'));
+        if (provisional.incomplete) reasons.push(t('value.whyIncomplete'));
+        if (provisional.unpriced > 0) reasons.push(t('value.whyUnpriced', { count: provisional.unpriced }));
+        if (provisional.quota) reasons.push(t('value.whyQuota'));
+        if (provisional.mismatch) reasons.push(t('value.whyMismatch', { delta: numberText(t, quota.delta) }));
+      }
+
+      const reconcile = quota === null
+        ? null
+        : (quota.ranged === true
+          ? { mark: '—', foot: t('value.reconcileRanged') }
+          : (quota.error !== null && quota.error !== undefined
+            ? { mark: '—', foot: t('value.reconcileNone') }
+            : (quota.reconciled
+              ? { mark: '✓', foot: t('value.reconcileOk') }
+              : { mark: 'Δ', foot: t('value.reconcileBad', { delta: numberText(t, quota.delta) }) })));
+
+      const collectNote = status === null
+        ? null
+        : h(Note, { style: { marginTop: '8px' } },
+          t('analysis.phase.' + status.phase) + ' · ' + t('value.progress', {
+            scanned: status.scanned,
+            collected: status.collected,
+            pages: status.pages,
+          }),
+          ' · ' + (status.phase === 'complete' && status.capped !== true ? t('value.complete') : t('value.incomplete')),
+          status.serverTotal === null || status.serverTotal === undefined
+            ? ''
+            : ' · ' + t('value.serverTotal', { total: status.serverTotal }),
+          status.range === null || status.range === undefined
+            ? ' · ' + t('value.wholeHistory')
+            : ' · ' + t('value.window', {
+              from: dateText(status.range.start, 480, false),
+              to: dateText(status.range.end - 1, 480, false),
+            }));
+
+      return h('div', null,
+        // The numbers come first: the toolbar above them is one thin row, so the
+        // first screenful is value, not settings.
+        h(Card, { title: t('value.range') },
+          h('div', { className: 'aq-row' },
+            h('label', { className: 'aq-row', style: { gap: '6px', cursor: 'pointer' } },
+              h('input', {
+                type: 'checkbox',
+                checked: allTime,
+                onChange: (event) => setAllTime(event.target.checked),
+              }),
+              h('span', null, t('value.allTime'))),
+            allTime
+              ? null
+              : [
+                h(Field, { key: 'from', label: t('value.from') },
+                  h('input', {
+                    className: 'aq-input',
+                    type: 'date',
+                    value: from,
+                    onChange: (event) => setFrom(event.target.value),
+                  })),
+                h(Field, { key: 'to', label: t('value.to') },
+                  h('input', {
+                    className: 'aq-input',
+                    type: 'date',
+                    value: to,
+                    onChange: (event) => setTo(event.target.value),
+                  })),
+              ],
+            h(Button, {
+              kind: 'primary',
+              disabled: busy || !enabled,
+              onClick: () => void start(),
+            }, busy ? t('value.collecting') : (status === null ? t('value.collect') : t('value.recollect'))),
+            status !== null && status.phase === 'running'
+              ? h(Button, { kind: 'danger', onClick: () => void cancel() }, t('value.cancel'))
+              : null,
+            computing ? h('span', { className: 'aq-hint' }, t('common.loading')) : null),
+          allTime ? h('p', { className: 'aq-hint', style: { margin: '6px 0 0' } }, t('value.rangeHintAll')) : null,
+          collectNote,
+          h(ErrorLine, { style: { marginTop: '10px' } }, error)),
+        result === null
+          ? h(Note, { style: { marginTop: '10px' } }, t('value.needCollect'))
+          : [
+            h('div', { key: 'stats', className: 'aq-cards', style: { marginTop: '10px' } },
+              h(Stat, {
+                label: t('value.usedValue'),
+                value: '¥' + moneyText(t, totals.cny),
+                foot: '$' + moneyText(t, totals.usd),
+              }),
+              h(Stat, {
+                label: t('value.grantedValue'),
+                value: '¥' + moneyText(t, extrapolation.granted.cny),
+                tone: reasons.length > 0 ? 'warn' : undefined,
+                foot: reasons.length > 0 ? t('value.provisional') : undefined,
+              }),
+              h(Stat, {
+                label: t('value.remainingValue'),
+                value: '¥' + moneyText(t, extrapolation.remaining.cny),
+                foot: extrapolation.remaining.usd === null ? undefined : '$' + moneyText(t, extrapolation.remaining.usd),
+              }),
+              h(Stat, {
+                label: t('value.reconcile'),
+                value: reconcile === null ? t('common.none') : reconcile.mark,
+                foot: reconcile === null ? undefined : reconcile.foot,
+              })),
+            counts === null
+              ? null
+              : h('p', { key: 'counts', className: 'aq-hint', style: { margin: '10px 0 0' } },
+                t('value.counts', { consumption: counts.consumption, errors: counts.failures, other: counts.others }),
+                result.computedAt === undefined ? '' : ' · ' + t('value.computedAt', { time: stampText(result.computedAt) })),
+            counts !== null && counts.consumption === 0
+              ? h(Note, { key: 'empty', style: { marginTop: '10px' } }, t('value.empty'))
+              : h(Card, { key: 'table', title: t('value.table'), style: { marginTop: '10px' } },
+                h(Table, {
+                  empty: t('value.empty'),
+                  columns: [
+                    { key: 'period', label: t('value.period') },
+                    { key: 'kind', label: t('value.kind') },
+                    { key: 'tokens', label: t('value.tokens'), numeric: true },
+                    { key: 'usd', label: t('value.usd'), numeric: true },
+                    { key: 'cny', label: t('value.cny'), numeric: true },
+                  ],
+                  rows: tableRows,
+                })),
+            result.models === undefined || result.models.length === 0
+              ? null
+              : h(Card, { key: 'models', title: t('value.models'), style: { marginTop: '10px' } },
+                h(Table, {
+                  empty: t('value.empty'),
+                  columns: [
+                    { key: 'model', label: t('value.models'), wrap: true },
+                    { key: 'records', label: t('value.records'), numeric: true },
+                    { key: 'hit', label: t('value.hit'), numeric: true },
+                    { key: 'miss', label: t('value.miss'), numeric: true },
+                    { key: 'output', label: t('value.output'), numeric: true },
+                    { key: 'quota', label: t('value.quota'), numeric: true },
+                    { key: 'usd', label: t('value.usd'), numeric: true },
+                    { key: 'cny', label: t('value.cny'), numeric: true },
+                  ],
+                  rows: result.models.map((entry) => ({
+                    key: String(entry.model),
+                    value: {
+                      model: entry.priced
+                        ? modelText(t, entry.model)
+                        : modelText(t, entry.model) + ' · ' + t('value.unpricedTag'),
+                      records: numberText(t, entry.records),
+                      hit: numberText(t, entry.hit),
+                      miss: numberText(t, entry.miss),
+                      output: numberText(t, entry.output),
+                      quota: numberText(t, entry.quota),
+                      usd: entry.priced ? moneyText(t, entry.usd) : '—',
+                      cny: entry.priced ? moneyText(t, entry.cny) : '—',
+                    },
+                  })),
+                })),
+            reasons.length === 0
+              ? null
+              : h('div', { key: 'reasons', className: 'aq-note', style: { marginTop: '10px' } },
+                reasons.map((reason, index) => h('div', { key: index }, '· ' + reason))),
+          ],
+        // Everything below is calibration: the rate, the unit, the holidays and
+        // the price table. It sits under the numbers on purpose.
+        h(Card, { title: t('value.rate'), style: { marginTop: '10px' } },
+          h('div', { className: 'aq-row' },
+            h(Field, { label: t('value.currency'), hint: t('value.currencyHint'), style: { flex: '0 1 170px' } },
+              h('select', {
+                className: 'aq-select',
+                value: currency,
+                onChange: (event) => save({ currency: event.target.value }),
+              },
+                h('option', { value: 'CNY' }, t('value.currencyCny')),
+                h('option', { value: 'USD' }, t('value.currencyUsd')))),
+            h(Field, { label: t('value.rate'), hint: t('value.rateHint', { rate: DEFAULT_RATE }), style: { flex: '0 1 160px' } },
+              h('input', {
+                className: 'aq-input',
+                type: 'number',
+                min: '0.1',
+                max: '100',
+                step: '0.01',
+                value: rateText,
+                onChange: (event) => rateChange(event.target.value),
+                onBlur: () => clearDraft('rate'),
+              })),
+            h(Field, { label: t('value.holidays'), hint: t('value.holidaysHint'), style: { flex: '1 1 280px' } },
+              h('input', {
+                className: 'aq-input',
+                value: holidays,
+                spellCheck: false,
+                placeholder: '2026-01-01, 2026-02-17',
+                onChange: (event) => save({ holidays: event.target.value }),
+              })))),
+        h(Card, {
+          title: t('value.prices'),
+          aside: t('value.priceUnit', { unit }),
+          style: { marginTop: '10px' },
+        },
+          h('div', { className: 'aq-row', style: { marginBottom: '8px' } },
+            h(Button, { disabled: fetching, onClick: () => void fetchPrices() },
+              fetching ? t('value.fetchingPrices') : t('value.fetchPrices')),
+            h('span', { className: 'aq-hint' },
+              source.kind === 'live'
+                ? t('value.priceSourceLive', { time: stampText(source.fetchedAt) })
+                : t('value.priceSourceSnapshot', { version: source.version === undefined || source.version === null ? PRICE_SNAPSHOT.version : source.version }))),
+          h(ErrorLine, null, priceError),
+          priceNotice === '' ? null : h('p', { className: 'aq-ok', style: { margin: '0 0 8px' } }, priceNotice),
+          editorModels.length === 0
+            ? h(Note, null, t('value.noModels'))
+            : h('div', null, editorModels.map((model) => h('div', { key: model, className: 'aq-price-box' },
+              h('div', { className: 'aq-price-name' }, model,
+                isTemplate(model) ? h('span', { className: 'aq-price-tag' }, ' · ' + t('value.templateTag')) : null),
+              h('div', { className: 'aq-price-grid' },
+                h('span', { className: 'aq-price-tag' }, ''),
+                h('span', { className: 'aq-price-tag' }, t('value.priceHit')),
+                h('span', { className: 'aq-price-tag' }, t('value.priceMiss')),
+                h('span', { className: 'aq-price-tag' }, t('value.priceOutput'))),
+              [['peak', t('value.pricePeak')], ['offpeak', t('value.priceOffpeak')]].map((row) =>
+                h('div', { key: row[0], className: 'aq-price-grid' },
+                  h('span', { className: 'aq-price-tag' }, row[1]),
+                  ['hit', 'miss', 'output'].map((field) => h('input', {
+                    key: field,
+                    className: 'aq-input',
+                    type: 'number',
+                    min: '0',
+                    step: '0.001',
+                    'aria-label': model + ' ' + row[1] + ' ' + field,
+                    value: priceText(model, row[0], field),
+                    onChange: (event) => priceChange(model, row[0], field, event.target.value),
+                    onBlur: () => clearDraft(priceKeyOf(model, row[0], field)),
+                  }))))))),
+          h('div', { className: 'aq-row', style: { marginTop: '10px' } },
+            missing.length === 0
+              ? null
+              : h(Button, { onClick: fillMissing }, t('value.fillPrice')),
+            h(Button, {
+              kind: 'ghost',
+              onClick: () => save({
+                prices: clonePrices(PRICE_SNAPSHOT.models),
+                currency: PRICE_SNAPSHOT.currency,
+                source: SNAPSHOT_SOURCE,
+              }),
+            }, t('value.resetPrices'))),
+          missing.length === 0
+            ? null
+            : h('p', { className: 'aq-hint', style: { marginTop: '8px' } },
+              t('value.priceMissing', { count: missing.length, models: missing.join(' / ') })),
+          h('p', { className: 'aq-hint', style: { marginTop: '6px' } }, t('value.pricesHint'))),
+        h(Note, { style: { marginTop: '10px' } }, t('value.assumption')),
+        h(Note, { style: { marginTop: '8px' } }, t('value.source')),
+        h(Note, { style: { marginTop: '8px' } }, t('value.sub')));
+    }
+
     function SettingsTab(props) {
       const t = props.t;
       const settings = props.settings;
@@ -1632,6 +2568,21 @@ window.__ModuleLoader__.load({
     function VersionsTab(props) {
       const t = props.t;
       const history = [{
+        version: '0.6.0',
+        date: t('versions.0.6.0.date'),
+        title: t('versions.0.6.0.title'),
+        items: t('versions.0.6.0.items'),
+      }, {
+        version: '0.5.0',
+        date: t('versions.0.5.0.date'),
+        title: t('versions.0.5.0.title'),
+        items: t('versions.0.5.0.items'),
+      }, {
+        version: '0.4.0',
+        date: t('versions.0.4.0.date'),
+        title: t('versions.0.4.0.title'),
+        items: t('versions.0.4.0.items'),
+      }, {
         version: '0.3.0',
         date: t('versions.0.3.0.date'),
         title: t('versions.0.3.0.title'),
@@ -1658,7 +2609,7 @@ window.__ModuleLoader__.load({
 
     /* ------------------------------------------------------------------- panel */
 
-    const TABS = ['overview', 'models', 'logs', 'analysis', 'settings', 'versions'];
+    const TABS = ['value', 'overview', 'models', 'logs', 'analysis', 'settings', 'versions'];
 
     function mergeSnapshot(previous, next) {
       const merged = {
@@ -1682,7 +2633,8 @@ window.__ModuleLoader__.load({
       const bus = props.bus;
       const [settings, setSettings] = useState(null);
       const [snapshot, setSnapshot] = useState(null);
-      const [tab, setTab] = useState('overview');
+      // The value panel leads: it is the answer the reader opens the plugin for.
+      const [tab, setTab] = useState('value');
       const [busy, setBusy] = useState(false);
       const [error, setError] = useState('');
       const [ready, setReady] = useState(false);
@@ -1742,8 +2694,8 @@ window.__ModuleLoader__.load({
 
       const hasToken = settings !== null && settings.hasToken === true;
       const tabLabel = (key) => t('tab.' + key);
-      // The analysis panel is mounted once and then only hidden, so a finished
-      // collection survives a trip to another tab.
+      // The analysis and value panels are mounted once and then only hidden, so
+      // a finished collection survives a trip to another tab.
       const [analysisMounted, setAnalysisMounted] = useState(false);
       useEffect(() => {
         if (hasToken) setAnalysisMounted(true);
@@ -1755,6 +2707,10 @@ window.__ModuleLoader__.load({
           key: 'analysis',
           style: { display: tab === 'analysis' ? 'block' : 'none' },
         }, h(AnalysisTab, { t, enabled: hasToken && tab === 'analysis' })));
+        panels.push(h('div', {
+          key: 'value',
+          style: { display: tab === 'value' ? 'block' : 'none' },
+        }, h(ValueTab, { t, enabled: hasToken && tab === 'value' })));
       }
       if (tab === 'overview') panels.push(h(OverviewTab, { key: 'overview', t, snapshot }));
       if (tab === 'models') panels.push(h(ModelsTab, { key: 'models', t, snapshot }));

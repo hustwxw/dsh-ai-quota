@@ -118,7 +118,7 @@ if (!dicts) {
   let match;
   while ((match = literal.exec(source)) !== null) used.add(match[1]);
   // Dynamic families the components build by concatenation.
-  for (const tab of ['overview', 'models', 'logs', 'analysis', 'settings', 'versions']) used.add('tab.' + tab);
+  for (const tab of ['overview', 'models', 'logs', 'analysis', 'value', 'settings', 'versions']) used.add('tab.' + tab);
   for (const phase of ['running', 'complete', 'cancelled', 'failed']) used.add('analysis.phase.' + phase);
 
   for (const key of used) {

@@ -28,7 +28,7 @@ Do this, in order:
    - if that still fails, git clone https://github.com/hustwxw/dsh-ai-quota and
      reinstall with target set to that directory's absolute path.
    - Never install 0.0.0-stage: it is npm's auto-created empty placeholder stub
-     and nothing will show up in the sidebar. You want latest (currently 0.3.3).
+     and nothing will show up in the sidebar. You want latest (currently 0.6.0).
 3) Then ask me to refresh the Web UI, and confirm an "AI Quota" icon appears in
    the sidebar (right after Plugins / Scheduled tasks). You can verify with
    cordis_inspect_query (platform = client, provider = Slots, method =
@@ -106,9 +106,31 @@ The row renders as `<display name> · 79%`:
 | Models & pricing | Model list and endpoint types from `/v1/models`; the price table and group ratios from `/api/pricing` |
 | Call log | Server-side paging (20 / 50 / 100), in-page search over model name and request_id, click a row for every field |
 | Analysis | Date range + time zone (UTC / UTC+8) + day or hour granularity; the Host pages through the log and aggregates locally into quota trend, token trend, model ranking and a 24-hour histogram; clicking a bar drills into the rows (50 per page) |
+| **Usage value** | The first and default tab: spend, whole-quota estimate, remaining-quota estimate and reconciliation at the very top, the breakdown and model detail below, collection and the price table at the bottom |
 | Versions | What each release changed |
 
 Analysis is "collect, then aggregate locally": the Host walks pages from 1 until a page comes back short of 50 rows (the gateway's only end signal), de-duplicates by `id`, counts rows that fall outside the range / repeat / conflict, and aggregates by granularity and time zone. Guard rails are 20 000 pages, 200 000 rows and 30 minutes; hitting one says so in the status line rather than silently truncating.
+
+## Usage value
+
+This tab runs the same arithmetic as the `deepseek-usage-value` skill, only inside the panel: it collects by itself and re-prices on every edit, so the script never has to be run by hand.
+
+| Step | Rule |
+| --- | --- |
+| Collection | "All time" pages from 1 to the last one; untick it to collect one date window instead (UTC+8, at most 366 days). The gateway pages newest-first, so a walk stops **as soon as a whole page falls before the window** (24 pages for two days versus 92 for everything); only a local cap counts as truncated |
+| Consumption only | Only `type = 2` rows are priced; `type = 4 / 5` (failed requests) and other records are counted apart so nothing is billed twice |
+| Three token kinds | Hit = `cache_tokens` (falling back to `cached_tokens`, then 0); miss = input − hit (hit greater than input stops the run with an error); output = `completion_tokens`. `cache_write_tokens` is never added to the input |
+| Peak test | A weekday inside 01:00–04:00 or 06:00–10:00 UTC is peak; every other hour, weekends and the public holidays you list are off-peak |
+| Pricing | `(hit × hit rate + miss × miss rate + output × output rate) ÷ 1,000,000`, each model at its own rates; a model without a price is listed on its own and never borrows another model's rate |
+| Template rates | An unknown model can be drafted with **Fill from the template** (the Flash / V4-Pro rates), but that row keeps a "template price, unverified" tag until the first number is edited — a borrowed rate is always visible as one |
+| Retries | Every page is requested up to 3 times (700 ms / 1400 ms apart) before the walk is called failed: a long walk should not be wiped out by one blip |
+| Rate | The **price unit** decides the direction: with a CNY table the CNY column is the table itself and the rate only fills the USD column; with a USD table it is the other way round. The default is 6.66 (public quotes of 2026-11-02: open.er-api 6.6609, exchangerate-api 6.66, ECB 2026-10-30 cross 6.6529; CFETS central parity that day was 6.7146) |
+| Reconciliation | The `quota` sum of consumption rows against `total_used` from `/api/usage/token/`; a gap over 2% is reported as a mismatch. **A windowed walk is not reconciled** (a slice can never equal the lifetime total), and its extrapolation stays provisional with the reason shown |
+| Extrapolation | Value used × `total_granted` ÷ log quota used, and the same with `total_available` for what is left. An unfinished walk, an unpriced model, an unreadable quota endpoint or a mismatch marks every extrapolation provisional and names the reason |
+
+The table, the rate and the holiday list live in **this browser's** `localStorage` (`dsh-ai-quota/value-v1`) — not in the credential store, never uploaded. The default table (USD per million tokens, entered 2026-11-02) is only a starting point: check it against the DeepSeek pricing page before relying on it (`deepseek-chat` / `deepseek-reasoner` peak 0.028 / 0.28 / 0.42, off-peak at half of that).
+
+The panel only calls four read-only endpoints (`/api/usage/token/`, `/v1/models`, `/api/pricing`, `/api/log/token`); it never changes a quota or a setting.
 
 ## Install
 
@@ -136,7 +158,14 @@ Then install that directory instead:
 plugin_manager  install_bundle  target = <absolute path of the clone>
 ```
 
-During development a change to `client.js` takes effect on a page refresh; a change to `index.js` (the Host half) needs a Harness restart. The render test only really runs when React 18 is resolvable (see below), otherwise it reports SKIPPED.
+During development a change to `client.js` takes effect on a page refresh; a change to `index.js` (the Host half) needs a Harness restart. The render and DOM tests only really run when React 18 and jsdom are resolvable, otherwise they report SKIPPED:
+
+```powershell
+$env:DSH_NODE_MODULES = "F:\AI\deepseek-harness\deepseek-harness\node_modules"   # any node_modules holding react18 + jsdom
+npm test
+```
+
+Five layers: `host-test.mjs` runs the real Host against a fake gateway (the value arithmetic, the CNY/USD units and reconciliation), `pricing-test.mjs` feeds the official page sample to the parser (plus four rejection cases), `locale-check.cjs` checks the zh/en dictionaries, `render-test.mjs` server-renders every tab with React 18, and `value-dom-test.mjs` drives the whole value path in jsdom — collect, price, render, edit the rate, re-price, fetch the official table, migrate an older snapshot.
 
 Prefer not to type commands? Hand [the prompt at the top](#-one-paste-install-hand-the-block-below-to-your-dsh) to the receiving DSH — it installs and verifies by itself.
 
