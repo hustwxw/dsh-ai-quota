@@ -246,6 +246,9 @@ window.__ModuleLoader__.load({
       'value.computedAt': '估算于 {time}',
       'value.empty': '没有可估算的消费记录',
       'versions.sub': '本插件与桌面版 ai-quota-tauri 功能对齐。',
+      'versions.0.6.2.title': '面向 New API 中转站',
+      'versions.0.6.2.date': '2026-11-02',
+      'versions.0.6.2.items': 'README 说明插件适配 New API 系中转站：只读四个站点接口、skey 需可查额度与日志、Host 需能直连站点、金额按官方价目估算而非站点结算、模型别名用模板补价、一机一套连接',
       'versions.0.6.1.title': '文档修订',
       'versions.0.6.1.date': '2026-11-02',
       'versions.0.6.1.items': '说明文字统一按「官方价目 + 官方时段规则」表述，去掉对外部脚本的引用；功能与 0.6.0 一致',
@@ -494,6 +497,9 @@ window.__ModuleLoader__.load({
       'value.computedAt': 'Computed {time}',
       'value.empty': 'There is no consumption record to price',
       'versions.sub': 'This plugin matches the desktop ai-quota-tauri feature set.',
+      'versions.0.6.2.title': 'Built for New API relay stations',
+      'versions.0.6.2.date': '2026-11-02',
+      'versions.0.6.2.items': 'The README now says the plugin targets New API relay stations: four read-only station endpoints, a skey that may read quota and logs, a Host that can reach the station, amounts at list price rather than the station settlement, template rates for aliased models, and one connection per Harness',
       'versions.0.6.1.title': 'Documentation patch',
       'versions.0.6.1.date': '2026-11-02',
       'versions.0.6.1.items': 'Wording now speaks of the official price list and billing windows instead of naming an external script; behaviour is identical to 0.6.0',
@@ -2574,6 +2580,11 @@ window.__ModuleLoader__.load({
     function VersionsTab(props) {
       const t = props.t;
       const history = [{
+        version: '0.6.2',
+        date: t('versions.0.6.2.date'),
+        title: t('versions.0.6.2.title'),
+        items: t('versions.0.6.2.items'),
+      }, {
         version: '0.6.1',
         date: t('versions.0.6.1.date'),
         title: t('versions.0.6.1.title'),

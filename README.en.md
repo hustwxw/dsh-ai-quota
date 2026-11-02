@@ -54,6 +54,19 @@ The only thing the other side has to do afterwards: **panel → Connection → e
 
 It turns a company AI quota gateway (built on [New API](https://github.com/Calcium-Ion/new-api)) into a resident panel inside the Harness Web UI: the sidebar row shows the remaining-quota percentage and refreshes on a click, and the panel itself covers the quota overview, model limits, paginated call logs, model pricing, and ranged call analysis with drill-down.
 
+## Built for New API relay stations
+
+The plugin is written against the endpoints a **New API relay station** ships with — a self-hosted proxy, a team or company gateway, an intranet API relay. One station, one skey, and the panel shows the quota and call log that station holds for you.
+
+| Item | Detail |
+| --- | --- |
+| Contract | Four read-only station endpoints only: `/api/usage/token/` (quota), `/v1/models` (models), `/api/pricing` (ratios, no auth), `/api/log/token` (call log). Nothing has to be enabled or changed on the station |
+| Permissions | The skey must be allowed to read quota and logs; some stations gate log access separately, and a failure is shown verbatim rather than hidden |
+| Network | The Host process must reach the station (intranet / VPN is the usual case); no proxy is used and redirects are not followed |
+| Pricing | Amounts are the service value at **DeepSeek's published list price**, not what the relay settles; the quota-point-to-currency conversion is unverified, so the panel never makes it up |
+| Model names | If a station renames models (its own aliases), draft the row with **Fill from the template** and correct it to the station's own rates, which clears the "template price, unverified" tag. The official-page fetch only knows official model names |
+| Several stations | One Harness keeps one connection (address + skey); point Connection at another station to switch |
+
 - The UI runs in the browser (React + theme tokens, **importing no Harness Client package**), while the data is fetched from the gateway by the Harness Host process.
 - The skey lives in the local credential store (Harness `credentials`). It is **never written to browser storage and never sent back to the page** — the page only learns whether one is configured.
 - Read-only: the plugin only ever issues GETs and never writes to the gateway.
