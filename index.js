@@ -681,9 +681,9 @@ function emptyBucket() {
 }
 
 /**
- * Price a collected job the way the `deepseek-usage-value` skill does: only
- * consumption rows, cache hits split out of the input, every model at its own
- * rate, peak and off-peak apart, then extrapolated to the whole quota.
+ * Price a collected job from the gateway's own log: only consumption rows, cache
+ * hits split out of the input, every model at its own rate, peak and off-peak
+ * apart, then extrapolated to the whole quota.
  *
  * Modules whose model has no price are listed instead of being priced with
  * another model's rate, and any extrapolation that rests on a guess is flagged.

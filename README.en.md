@@ -113,7 +113,7 @@ Analysis is "collect, then aggregate locally": the Host walks pages from 1 until
 
 ## Usage value
 
-This tab runs the same arithmetic as the `deepseek-usage-value` skill, only inside the panel: it collects by itself and re-prices on every edit, so the script never has to be run by hand.
+The arithmetic follows DeepSeek's published price list and billing windows; the panel collects by itself and re-prices on every edit, so no script has to be run by hand.
 
 | Step | Rule |
 | --- | --- |

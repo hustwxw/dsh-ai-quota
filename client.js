@@ -246,6 +246,9 @@ window.__ModuleLoader__.load({
       'value.computedAt': '估算于 {time}',
       'value.empty': '没有可估算的消费记录',
       'versions.sub': '本插件与桌面版 ai-quota-tauri 功能对齐。',
+      'versions.0.6.1.title': '文档修订',
+      'versions.0.6.1.date': '2026-11-02',
+      'versions.0.6.1.items': '说明文字统一按「官方价目 + 官方时段规则」表述，去掉对外部脚本的引用；功能与 0.6.0 一致',
       'versions.0.6.0.title': '数值置顶与日期范围',
       'versions.0.6.0.date': '2026-11-02',
       'versions.0.6.0.items': '「用量价值」提为第一个标签页并成为默认页、已用金额与分项明细提到最上方（采集/口径/价目沉到下面）、采集支持日期范围（取消「全部时间」选起止日期，按 UTC+8 计，最长 366 天）、范围采集不再误报配额不一致并明确标注暂定、网关按新到旧分页时翻到范围之前即提前结束',
@@ -491,6 +494,9 @@ window.__ModuleLoader__.load({
       'value.computedAt': 'Computed {time}',
       'value.empty': 'There is no consumption record to price',
       'versions.sub': 'This plugin matches the desktop ai-quota-tauri feature set.',
+      'versions.0.6.1.title': 'Documentation patch',
+      'versions.0.6.1.date': '2026-11-02',
+      'versions.0.6.1.items': 'Wording now speaks of the official price list and billing windows instead of naming an external script; behaviour is identical to 0.6.0',
       'versions.0.6.0.title': 'Numbers first, and a date range',
       'versions.0.6.0.date': '2026-11-02',
       'versions.0.6.0.items': 'Usage value is now the first and default tab, the spend and the breakdown sit at the top (collection, units and the price table moved below), collection accepts a date range (untick All time, UTC+8, at most 366 days), a windowed walk no longer reports a false quota mismatch and is labelled provisional, and a newest-first gateway ends the walk as soon as a page falls entirely before the window',
@@ -2568,6 +2574,11 @@ window.__ModuleLoader__.load({
     function VersionsTab(props) {
       const t = props.t;
       const history = [{
+        version: '0.6.1',
+        date: t('versions.0.6.1.date'),
+        title: t('versions.0.6.1.title'),
+        items: t('versions.0.6.1.items'),
+      }, {
         version: '0.6.0',
         date: t('versions.0.6.0.date'),
         title: t('versions.0.6.0.title'),

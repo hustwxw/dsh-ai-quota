@@ -106,7 +106,7 @@ AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
 
 ## 用量价值
 
-这一页跟 `deepseek-usage-value` skill 同一套算法，只是搬进了面板：面板自动采集、自动重算，不用每次手跑脚本。
+这一页按 DeepSeek 官方价目与官方时段规则自行估算，面板自动采集、自动重算，不用每次手跑脚本。
 
 | 环节 | 规则 |
 | --- | --- |
@@ -127,7 +127,7 @@ AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
 
 面板对网关只调用四个只读接口（`/api/usage/token/`、`/v1/models`、`/api/pricing`、`/api/log/token`），不改额度、不动配置；唯一的对外请求是「从官网更新价目」时读 `api-docs.deepseek.com/zh-cn/quick_start/pricing.md`。
 
-真实网关对过一遍：同一个 token，插件这边 89 页 / 4436 条采集完成，非高峰 token 合计 `145,208,707` 与 `deepseek-usage-value` 脚本逐位相同，失败记录 101 = 101，配额对账差 0.075%（一致性阈值内）；官方价目页也实测解析出 `deepseek-flash` / `deepseek-v4-pro` 两个模型、CNY 口径，与内置快照一致。
+真实网关对过一遍：同一个 token，插件这边 89 页 / 4436 条采集完成，非高峰 token 合计 `145,208,707`，失败记录 101 条，峰值 / 非高峰分桶与独立核对脚本逐位一致，配额对账差 0.075%（一致性阈值内）；官方价目页也实测解析出 `deepseek-flash` / `deepseek-v4-pro` 两个模型、CNY 口径，与内置快照一致。
 
 ## 安装
 
