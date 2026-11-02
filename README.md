@@ -4,7 +4,8 @@
 
 AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
 
-> ✉️ **意见与交流**：**softwarewxw@gmail.com**
+> ✉️ **意见与交流**：**softwarewxw [at] gmail [dot] com**
+> （写成这样是为了挡爬虫，发信时把 `[at]` 换成 `@`、`[dot]` 换成 `.` 即可）
 > 用着不顺手、想加功能、你所在中转站的接口长得不一样、或者想贡献一段代码 —— 都直接发邮件。
 > 附上**插件版本号 + 站点类型（New API / one-api / 自建）+ 截图或报错原文**，能省掉一轮来回。
 

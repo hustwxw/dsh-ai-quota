@@ -135,6 +135,21 @@ if (!dicts) {
   console.log('dictionary: ' + zhKeys.length + ' keys, ' + used.size + ' referenced');
 }
 
+// A raw address in the docs or the bundle is a spam magnet, so the public
+// artifacts spell it out with [at] / [dot]; only package.json metadata may
+// carry the literal (npm needs a machine-readable author/bugs field).
+const PLAIN_MAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z]{2,}/;
+for (const file of ['README.md', 'README.en.md', 'client.js', 'index.js', 'locale/zh.json', 'locale/en.json']) {
+  let text = '';
+  try {
+    text = fs.readFileSync(path.join(dir, file), 'utf8');
+  } catch {
+    continue;
+  }
+  const match = text.match(PLAIN_MAIL);
+  if (match) problems.push(file + ' contains a raw email address: ' + match[0]);
+}
+
 console.log('registrations: ' + slots.map((entry) => entry.config.name).join(', '));
 if (problems.length === 0) {
   console.log('SELF-CHECK OK');

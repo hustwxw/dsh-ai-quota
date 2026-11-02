@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Client half of the AI quota panel bundle.
  *
  * Renders one sidebar icon plus the panel it addresses. Every number on screen
@@ -247,12 +247,15 @@ window.__ModuleLoader__.load({
       'value.source': '默认价目与汇率是录入值（2026-11-02 录入，汇率 6.66 取公开市场价；CFETS 当日中间价 6.7146），落地前请对照 DeepSeek 官网价格页；面板只读网关接口，不改额度。',
       'value.computedAt': '估算于 {time}',
       'value.empty': '没有可估算的消费记录',
+      'versions.0.7.1.title': '邮箱防爬',
+      'versions.0.7.1.date': '2026-11-02',
+      'versions.0.7.1.items': 'README 与版本历史里的反馈邮箱改成 softwarewxw [at] gmail [dot] com 的写法，避免被地址收割；新增一项自检，若发布物里出现明文邮箱就直接报错',
       'versions.0.7.0.title': '默认近两周',
       'versions.0.7.0.date': '2026-11-02',
       'versions.0.7.0.items': '「用量价值」默认采集今天往前两周（UTC+8，含今天），不再默认翻完整个历史；可勾「全部时间」回到全量，也可自选起止日期；已用价值卡片标注所覆盖的日期范围',
       'versions.0.6.4.title': '留下反馈邮箱',
       'versions.0.6.4.date': '2026-11-02',
-      'versions.0.6.4.items': 'README 开头与版本历史页都留了反馈邮箱 softwarewxw@gmail.com，方便收集意见、站点兼容问题与功能建议；功能无变化',
+      'versions.0.6.4.items': 'README 开头与版本历史页都留了反馈邮箱，方便收集意见、站点兼容问题与功能建议；功能无变化',
       'versions.0.6.3.title': '去掉外部实现引用',
       'versions.0.6.3.date': '2026-11-02',
       'versions.0.6.3.items': '版本历史与 README 不再提及同类桌面客户端，只描述本插件自身的能力与适配对象；功能无变化',
@@ -271,7 +274,7 @@ window.__ModuleLoader__.load({
       'versions.0.4.0.title': '用量价值面板',
       'versions.0.4.0.date': '2026-11-02',
       'versions.0.4.0.items': '新增「用量价值」标签页：全量回读调用记录、按高峰 / 非高峰拆分命中与未命中输入及输出、按模型价目估算美元与人民币、与 total_used 对账并外推全部配额与剩余配额价值、价目与汇率可改且只存本浏览器',
-      'versions.sub': '每个版本的改动都记在这里；意见、建议或站点兼容问题，发邮件到 softwarewxw@gmail.com。',
+      'versions.sub': '每个版本的改动都记在这里；意见、建议或站点兼容问题，发邮件到 softwarewxw [at] gmail [dot] com。',
       'versions.0.3.0.title': '显示名称可配置',
       'versions.0.3.0.date': '2026-10-26',
       'versions.0.3.0.items': '连接设置可以改侧边栏与面板标题的显示名称（默认「AI 额度」，只存本浏览器）、名称与百分比在同一行、改名立即生效',
@@ -506,13 +509,16 @@ window.__ModuleLoader__.load({
       'value.source': 'The default prices and rate are entered values (entered 2026-11-02; the rate 6.66 is a public market quote, while CFETS\' central parity that day was 6.7146) — check the prices against the DeepSeek pricing page before relying on them. The panel only reads gateway endpoints and never changes a quota.',
       'value.computedAt': 'Computed {time}',
       'value.empty': 'There is no consumption record to price',
-      'versions.sub': 'What each release changed. Feedback, ideas or a station that behaves differently: softwarewxw@gmail.com.',
+      'versions.sub': 'What each release changed. Feedback, ideas or a station that behaves differently: softwarewxw [at] gmail [dot] com.',
+      'versions.0.7.1.title': 'Harvest-resistant address',
+      'versions.0.7.1.date': '2026-11-02',
+      'versions.0.7.1.items': 'The feedback address in the README and the changelog is written as softwarewxw [at] gmail [dot] com so harvesters miss it, and a self-check now fails the release if a raw address ever appears in the published files',
       'versions.0.7.0.title': 'Two weeks by default',
       'versions.0.7.0.date': '2026-11-02',
       'versions.0.7.0.items': 'Usage value now collects the last two weeks by default (UTC+8, today included) instead of the whole history; tick All time to go back to everything, or pick your own dates. The spend card names the days it covers',
       'versions.0.6.4.title': 'A feedback address',
       'versions.0.6.4.date': '2026-11-02',
-      'versions.0.6.4.items': 'The README and the changelog tab now carry softwarewxw@gmail.com, so feedback, station quirks and feature ideas have an address; behaviour is unchanged',
+      'versions.0.6.4.items': 'The README and the changelog tab now carry a feedback address, so comments, station quirks and feature ideas have somewhere to go; behaviour is unchanged',
       'versions.0.6.3.title': 'No external-build references',
       'versions.0.6.3.date': '2026-11-02',
       'versions.0.6.3.items': 'The changelog and the README no longer mention a comparable desktop client, and describe only what this plugin does and who it targets; behaviour is unchanged',
@@ -2610,6 +2616,11 @@ window.__ModuleLoader__.load({
     function VersionsTab(props) {
       const t = props.t;
       const history = [{
+        version: '0.7.1',
+        date: t('versions.0.7.1.date'),
+        title: t('versions.0.7.1.title'),
+        items: t('versions.0.7.1.items'),
+      }, {
         version: '0.7.0',
         date: t('versions.0.7.0.date'),
         title: t('versions.0.7.0.title'),

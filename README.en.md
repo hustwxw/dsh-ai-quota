@@ -4,7 +4,8 @@
 
 An AI quota panel — a Cordis plugin for **DeepSeek Harness (DSH)**.
 
-> ✉️ **Feedback and discussion**: **softwarewxw@gmail.com**
+> ✉️ **Feedback and discussion**: **softwarewxw [at] gmail [dot] com**
+> (written this way to keep address harvesters out — turn `[at]` into `@` and `[dot]` into `.` when writing)
 > Anything that feels off, a feature you want, a relay station whose endpoints differ, or a patch you would
 > like to contribute — just email. Include the **plugin version, your station type (New API / one-api /
 > self-hosted) and a screenshot or the raw error**, and it saves a round trip.
