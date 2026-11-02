@@ -339,28 +339,41 @@ else if (!unpricedRow.textContent.includes('缺价')) problems.push('the unprice
 
 /* ------------------------------------------------------------- date window */
 
-// Unticking "All time" must start a walk that carries the window.
+// The default walk is a window: today plus the thirteen days before it.
+const firstStart = calls.find((call) => call.url.endsWith('/value/start'));
+if (firstStart === undefined) problems.push('the first walk never started');
+else {
+  const body = firstStart.body;
+  if (!Number.isInteger(body.start) || !Number.isInteger(body.end)) {
+    problems.push('the default walk sent no epoch window: ' + JSON.stringify(body));
+  } else {
+    const days = Math.round((body.end - body.start) / 86400);
+    if (days !== 14) problems.push('the default window is ' + days + ' days, not 14');
+    const endGap = Math.abs(body.end - Math.floor(Date.now() / 1000));
+    if (endGap > 90000) problems.push('the default window does not end today (off by ' + endGap + 's)');
+  }
+}
+
+// Ticking "All time" must send an empty body, i.e. no filter at all.
 const checkbox = document.querySelector('input[type="checkbox"]');
 if (checkbox === null) problems.push('the All time checkbox was not rendered');
 else {
+  if (checkbox.checked !== false) problems.push('All time is ticked by default');
   const startsBefore = calls.filter((call) => call.url.endsWith('/value/start')).length;
-  Simulate.change(checkbox, { target: { checked: false } });
+  Simulate.change(checkbox, { target: { checked: true } });
   await settle(250);
   const recollect = [...document.querySelectorAll('button')]
     .find((button) => button.textContent.includes('重新采集'));
-  if (recollect === undefined) problems.push('the recollect button vanished after unticking All time');
+  if (recollect === undefined) problems.push('the recollect button vanished after ticking All time');
   else {
     Simulate.click(recollect);
     await settle(1000);
     const starts = calls.filter((call) => call.url.endsWith('/value/start'));
-    if (starts.length <= startsBefore) problems.push('unticking All time did not start a windowed walk');
+    if (starts.length <= startsBefore) problems.push('ticking All time did not start a walk');
     else {
       const body = starts[starts.length - 1].body;
-      if (!Number.isInteger(body.start) || !Number.isInteger(body.end)) {
-        problems.push('the windowed walk sent no epoch range: ' + JSON.stringify(body));
-      } else {
-        const days = Math.round((body.end - body.start) / 86400);
-        if (days !== 7) problems.push('the default window is ' + days + ' days');
+      if (body.start !== undefined || body.end !== undefined) {
+        problems.push('the whole-history walk still sent a window: ' + JSON.stringify(body));
       }
     }
   }

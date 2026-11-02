@@ -134,7 +134,7 @@ The arithmetic follows DeepSeek's published price list and billing windows; the 
 
 | Step | Rule |
 | --- | --- |
-| Collection | "All time" pages from 1 to the last one; untick it to collect one date window instead (UTC+8, at most 366 days). The gateway pages newest-first, so a walk stops **as soon as a whole page falls before the window** (24 pages for two days versus 92 for everything); only a local cap counts as truncated |
+| Collection | Collects **the last two weeks by default** (UTC+8, today included); tick "All time" to page through everything, or pick your own dates (at most 366 days). The gateway pages newest-first, so a walk stops **as soon as a whole page falls before the window** (24 pages for two days versus 92 for everything); only a local cap counts as truncated |
 | Consumption only | Only `type = 2` rows are priced; `type = 4 / 5` (failed requests) and other records are counted apart so nothing is billed twice |
 | Three token kinds | Hit = `cache_tokens` (falling back to `cached_tokens`, then 0); miss = input − hit (hit greater than input stops the run with an error); output = `completion_tokens`. `cache_write_tokens` is never added to the input |
 | Peak test | A weekday inside 01:00–04:00 or 06:00–10:00 UTC is peak; every other hour, weekends and the public holidays you list are off-peak |

@@ -168,6 +168,8 @@ window.__ModuleLoader__.load({
       'value.from': '开始日期',
       'value.to': '结束日期',
       'value.rangeHintAll': '勾上「全部时间」就翻完所有页；取消勾选只采集这两个日期之间（按 UTC+8 计），范围采集不做配额对账。',
+      'value.rangeHintWindow': '当前只采集这两个日期之间（按 UTC+8 计，默认今天往前两周）；勾「全部时间」则翻完所有页。范围采集不做配额对账，外推标暂定。',
+      'value.rangeFoot': '范围 {from} → {to}',
       'value.wholeHistory': '全部历史',
       'value.window': '范围 {from} → {to}',
       'value.badRange': '日期范围不正确：开始不能晚于结束，最长 366 天。',
@@ -245,6 +247,9 @@ window.__ModuleLoader__.load({
       'value.source': '默认价目与汇率是录入值（2026-11-02 录入，汇率 6.66 取公开市场价；CFETS 当日中间价 6.7146），落地前请对照 DeepSeek 官网价格页；面板只读网关接口，不改额度。',
       'value.computedAt': '估算于 {time}',
       'value.empty': '没有可估算的消费记录',
+      'versions.0.7.0.title': '默认近两周',
+      'versions.0.7.0.date': '2026-11-02',
+      'versions.0.7.0.items': '「用量价值」默认采集今天往前两周（UTC+8，含今天），不再默认翻完整个历史；可勾「全部时间」回到全量，也可自选起止日期；已用价值卡片标注所覆盖的日期范围',
       'versions.0.6.4.title': '留下反馈邮箱',
       'versions.0.6.4.date': '2026-11-02',
       'versions.0.6.4.items': 'README 开头与版本历史页都留了反馈邮箱 softwarewxw@gmail.com，方便收集意见、站点兼容问题与功能建议；功能无变化',
@@ -422,6 +427,8 @@ window.__ModuleLoader__.load({
       'value.from': 'From',
       'value.to': 'To',
       'value.rangeHintAll': 'With All time ticked the walk reads every page; untick it to collect only the days between these dates (UTC+8). A windowed walk skips the quota reconciliation.',
+      'value.rangeHintWindow': 'Only this window is collected (UTC+8; the last two weeks by default). Tick All time to read every page. A windowed walk skips the reconciliation and marks the extrapolation provisional.',
+      'value.rangeFoot': 'window {from} → {to}',
       'value.wholeHistory': 'all history',
       'value.window': 'window {from} → {to}',
       'value.badRange': 'That date range is not usable: the start must not be after the end, and the window may not exceed 366 days.',
@@ -500,6 +507,9 @@ window.__ModuleLoader__.load({
       'value.computedAt': 'Computed {time}',
       'value.empty': 'There is no consumption record to price',
       'versions.sub': 'What each release changed. Feedback, ideas or a station that behaves differently: softwarewxw@gmail.com.',
+      'versions.0.7.0.title': 'Two weeks by default',
+      'versions.0.7.0.date': '2026-11-02',
+      'versions.0.7.0.items': 'Usage value now collects the last two weeks by default (UTC+8, today included) instead of the whole history; tick All time to go back to everything, or pick your own dates. The spend card names the days it covers',
       'versions.0.6.4.title': 'A feedback address',
       'versions.0.6.4.date': '2026-11-02',
       'versions.0.6.4.items': 'The README and the changelog tab now carry softwarewxw@gmail.com, so feedback, station quirks and feature ideas have an address; behaviour is unchanged',
@@ -1883,10 +1893,10 @@ window.__ModuleLoader__.load({
       const pollTimer = useRef(null);
       const computeTimer = useRef(null);
       const started = useRef(false);
-      // The walk covers every page when `allTime` is on, otherwise one date
-      // window (UTC+8, the way the reader thinks about days).
-      const initialRange = useMemo(() => presetRange(7, 480), []);
-      const [allTime, setAllTime] = useState(true);
+      // One date window by default — the last two weeks, today included — and
+      // every page only when the reader asks for the whole history.
+      const initialRange = useMemo(() => presetRange(14, 480), []);
+      const [allTime, setAllTime] = useState(false);
       const [from, setFrom] = useState(initialRange.from);
       const [to, setTo] = useState(initialRange.to);
 
@@ -2179,6 +2189,18 @@ window.__ModuleLoader__.load({
         });
       }
 
+      // A windowed walk spends only part of the money, so the headline card says
+      // which days it covers instead of implying a lifetime total.
+      const resultRange = result !== null && result.status !== undefined && result.status !== null
+        ? result.status.range
+        : null;
+      const windowFoot = resultRange === null || resultRange === undefined
+        ? null
+        : t('value.rangeFoot', {
+          from: dateText(resultRange.start, 480, false),
+          to: dateText(resultRange.end - 1, 480, false),
+        });
+
       const reasons = [];
       if (extrapolation !== null && extrapolation.provisional !== null) {
         const provisional = extrapolation.provisional;
@@ -2257,7 +2279,8 @@ window.__ModuleLoader__.load({
               ? h(Button, { kind: 'danger', onClick: () => void cancel() }, t('value.cancel'))
               : null,
             computing ? h('span', { className: 'aq-hint' }, t('common.loading')) : null),
-          allTime ? h('p', { className: 'aq-hint', style: { margin: '6px 0 0' } }, t('value.rangeHintAll')) : null,
+          h('p', { className: 'aq-hint', style: { margin: '6px 0 0' } },
+            allTime ? t('value.rangeHintAll') : t('value.rangeHintWindow')),
           collectNote,
           h(ErrorLine, { style: { marginTop: '10px' } }, error)),
         result === null
@@ -2267,7 +2290,7 @@ window.__ModuleLoader__.load({
               h(Stat, {
                 label: t('value.usedValue'),
                 value: '¥' + moneyText(t, totals.cny),
-                foot: '$' + moneyText(t, totals.usd),
+                foot: '$' + moneyText(t, totals.usd) + (windowFoot === null ? '' : ' · ' + windowFoot),
               }),
               h(Stat, {
                 label: t('value.grantedValue'),
@@ -2587,6 +2610,11 @@ window.__ModuleLoader__.load({
     function VersionsTab(props) {
       const t = props.t;
       const history = [{
+        version: '0.7.0',
+        date: t('versions.0.7.0.date'),
+        title: t('versions.0.7.0.title'),
+        items: t('versions.0.7.0.items'),
+      }, {
         version: '0.6.4',
         date: t('versions.0.6.4.date'),
         title: t('versions.0.6.4.title'),
