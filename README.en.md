@@ -71,7 +71,6 @@ The plugin is written against the endpoints a **New API relay station** ships wi
 - The skey lives in the local credential store (Harness `credentials`). It is **never written to browser storage and never sent back to the page** — the page only learns whether one is configured.
 - Read-only: the plugin only ever issues GETs and never writes to the gateway.
 - The display name of the sidebar row and the panel title is **configurable** (default `AI Quota`), see [Display name](#display-name).
-- Feature-equivalent to the desktop `ai-quota-tauri` build (Tauri 2 + Rust + React, v0.3.0), without opening a second app.
 
 ![Panel overview](docs/overview.png)
 

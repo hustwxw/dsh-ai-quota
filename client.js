@@ -245,7 +245,9 @@ window.__ModuleLoader__.load({
       'value.source': '默认价目与汇率是录入值（2026-11-02 录入，汇率 6.66 取公开市场价；CFETS 当日中间价 6.7146），落地前请对照 DeepSeek 官网价格页；面板只读网关接口，不改额度。',
       'value.computedAt': '估算于 {time}',
       'value.empty': '没有可估算的消费记录',
-      'versions.sub': '本插件与桌面版 ai-quota-tauri 功能对齐。',
+      'versions.0.6.3.title': '去掉外部实现引用',
+      'versions.0.6.3.date': '2026-11-02',
+      'versions.0.6.3.items': '版本历史与 README 不再提及同类桌面客户端，只描述本插件自身的能力与适配对象；功能无变化',
       'versions.0.6.2.title': '面向 New API 中转站',
       'versions.0.6.2.date': '2026-11-02',
       'versions.0.6.2.items': 'README 说明插件适配 New API 系中转站：只读四个站点接口、skey 需可查额度与日志、Host 需能直连站点、金额按官方价目估算而非站点结算、模型别名用模板补价、一机一套连接',
@@ -261,7 +263,7 @@ window.__ModuleLoader__.load({
       'versions.0.4.0.title': '用量价值面板',
       'versions.0.4.0.date': '2026-11-02',
       'versions.0.4.0.items': '新增「用量价值」标签页：全量回读调用记录、按高峰 / 非高峰拆分命中与未命中输入及输出、按模型价目估算美元与人民币、与 total_used 对账并外推全部配额与剩余配额价值、价目与汇率可改且只存本浏览器',
-      'versions.sub': '本插件与桌面版 ai-quota-tauri 功能对齐。',
+      'versions.sub': '每个版本的改动都记在这里。',
       'versions.0.3.0.title': '显示名称可配置',
       'versions.0.3.0.date': '2026-10-26',
       'versions.0.3.0.items': '连接设置可以改侧边栏与面板标题的显示名称（默认「AI 额度」，只存本浏览器）、名称与百分比在同一行、改名立即生效',
@@ -271,8 +273,6 @@ window.__ModuleLoader__.load({
       'versions.0.1.0.title': '首个 DSH 版本',
       'versions.0.1.0.date': '2026-10-24',
       'versions.0.1.0.items': '额度概览、模型限制、分页调用记录与详情、模型计费、按时间范围的调用分析与图表下钻、本机凭据保存 skey',
-      'versions.desktop': '桌面版基线',
-      'versions.desktop.value': 'ai-quota-tauri 0.3.0',
     }
 
     const EN = {
@@ -496,7 +496,10 @@ window.__ModuleLoader__.load({
       'value.source': 'The default prices and rate are entered values (entered 2026-11-02; the rate 6.66 is a public market quote, while CFETS\' central parity that day was 6.7146) — check the prices against the DeepSeek pricing page before relying on them. The panel only reads gateway endpoints and never changes a quota.',
       'value.computedAt': 'Computed {time}',
       'value.empty': 'There is no consumption record to price',
-      'versions.sub': 'This plugin matches the desktop ai-quota-tauri feature set.',
+      'versions.sub': 'What each release changed.',
+      'versions.0.6.3.title': 'No external-build references',
+      'versions.0.6.3.date': '2026-11-02',
+      'versions.0.6.3.items': 'The changelog and the README no longer mention a comparable desktop client, and describe only what this plugin does and who it targets; behaviour is unchanged',
       'versions.0.6.2.title': 'Built for New API relay stations',
       'versions.0.6.2.date': '2026-11-02',
       'versions.0.6.2.items': 'The README now says the plugin targets New API relay stations: four read-only station endpoints, a skey that may read quota and logs, a Host that can reach the station, amounts at list price rather than the station settlement, template rates for aliased models, and one connection per Harness',
@@ -521,8 +524,6 @@ window.__ModuleLoader__.load({
       'versions.0.1.0.title': 'First DSH release',
       'versions.0.1.0.date': '2026-10-24',
       'versions.0.1.0.items': 'Quota overview, model limits, paginated call log with detail, model pricing, ranged call analysis with drill-down, local credential storage for the skey',
-      'versions.desktop': 'Desktop baseline',
-      'versions.desktop.value': 'ai-quota-tauri 0.3.0',
     }
 
     /* --------------------------------------------------------------- transport */
@@ -2580,6 +2581,11 @@ window.__ModuleLoader__.load({
     function VersionsTab(props) {
       const t = props.t;
       const history = [{
+        version: '0.6.3',
+        date: t('versions.0.6.3.date'),
+        title: t('versions.0.6.3.title'),
+        items: t('versions.0.6.3.items'),
+      }, {
         version: '0.6.2',
         date: t('versions.0.6.2.date'),
         title: t('versions.0.6.2.title'),
@@ -2624,8 +2630,6 @@ window.__ModuleLoader__.load({
         history.map((entry) => h(Card, { key: entry.version, title: entry.version + ' · ' + entry.title, aside: entry.date },
           h('ul', { style: { margin: 0, paddingLeft: '18px' } },
             entry.items.split('、').map((item, index) => h('li', { key: index }, item))))),
-        h(Card, { title: t('versions.desktop'), style: { marginTop: '10px' } },
-          h('p', { className: 'aq-hint', style: { margin: 0 } }, t('versions.desktop.value'))),
         h(Note, { style: { marginTop: '10px' } }, t('versions.sub')));
     }
 

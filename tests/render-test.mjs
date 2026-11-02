@@ -564,11 +564,16 @@ renderCase('Settings custom name', React.createElement(internals.SettingsTab, {
 
 // The tab that needs no data.
 renderCase('Versions', React.createElement(internals.VersionsTab, { t }), [
-  ['0.3.0', 'the current version heading'],
-  ['0.2.0', 'the previous version heading'],
+  ['0.6.2', 'the newest version heading'],
+  ['0.3.0', 'an older version heading'],
   ['0.1.0', 'the first version heading'],
-  [ZH['versions.desktop'], 'the desktop comparison card'],
+  [ZH['versions.sub'], 'the closing note'],
 ]);
+// Nothing in the changelog may point at an external build.
+const versionsMarkup = renderToStaticMarkup(React.createElement(internals.VersionsTab, { t }));
+for (const word of ['tauri', 'Tauri', '桌面版', 'desktop']) {
+  if (versionsMarkup.includes(word)) problems.push('the versions tab still mentions "' + word + '"');
+}
 
 // The sidebar row icon is the refresh control; both widths must render it.
 renderCase('Row icon wide', React.createElement(rowIcon, { size: 16, active: true }), [

@@ -64,7 +64,6 @@ AI 额度面板 —— 一个 **DeepSeek Harness（DSH）** 的 Cordis 插件。
 - skey 只存进本机凭据库（Harness `credentials`），**不写浏览器存储、不回传页面**——页面只知道「已配置 / 未配置」。
 - 只读：全程只发 GET，不修改网关任何数据。
 - 侧边栏与面板标题的**显示名称可自定义**（默认「AI 额度」），见[显示名称](#显示名称)。
-- 与同目录源码的桌面版 `ai-quota-tauri`（Tauri 2 + Rust + React，v0.3.0）功能对齐，但不用再单独开一个客户端。
 
 ![面板概览](docs/overview.png)
 
