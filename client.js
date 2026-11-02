@@ -245,6 +245,9 @@ window.__ModuleLoader__.load({
       'value.source': '默认价目与汇率是录入值（2026-11-02 录入，汇率 6.66 取公开市场价；CFETS 当日中间价 6.7146），落地前请对照 DeepSeek 官网价格页；面板只读网关接口，不改额度。',
       'value.computedAt': '估算于 {time}',
       'value.empty': '没有可估算的消费记录',
+      'versions.0.6.4.title': '留下反馈邮箱',
+      'versions.0.6.4.date': '2026-11-02',
+      'versions.0.6.4.items': 'README 开头与版本历史页都留了反馈邮箱 softwarewxw@gmail.com，方便收集意见、站点兼容问题与功能建议；功能无变化',
       'versions.0.6.3.title': '去掉外部实现引用',
       'versions.0.6.3.date': '2026-11-02',
       'versions.0.6.3.items': '版本历史与 README 不再提及同类桌面客户端，只描述本插件自身的能力与适配对象；功能无变化',
@@ -263,7 +266,7 @@ window.__ModuleLoader__.load({
       'versions.0.4.0.title': '用量价值面板',
       'versions.0.4.0.date': '2026-11-02',
       'versions.0.4.0.items': '新增「用量价值」标签页：全量回读调用记录、按高峰 / 非高峰拆分命中与未命中输入及输出、按模型价目估算美元与人民币、与 total_used 对账并外推全部配额与剩余配额价值、价目与汇率可改且只存本浏览器',
-      'versions.sub': '每个版本的改动都记在这里。',
+      'versions.sub': '每个版本的改动都记在这里；意见、建议或站点兼容问题，发邮件到 softwarewxw@gmail.com。',
       'versions.0.3.0.title': '显示名称可配置',
       'versions.0.3.0.date': '2026-10-26',
       'versions.0.3.0.items': '连接设置可以改侧边栏与面板标题的显示名称（默认「AI 额度」，只存本浏览器）、名称与百分比在同一行、改名立即生效',
@@ -496,7 +499,10 @@ window.__ModuleLoader__.load({
       'value.source': 'The default prices and rate are entered values (entered 2026-11-02; the rate 6.66 is a public market quote, while CFETS\' central parity that day was 6.7146) — check the prices against the DeepSeek pricing page before relying on them. The panel only reads gateway endpoints and never changes a quota.',
       'value.computedAt': 'Computed {time}',
       'value.empty': 'There is no consumption record to price',
-      'versions.sub': 'What each release changed.',
+      'versions.sub': 'What each release changed. Feedback, ideas or a station that behaves differently: softwarewxw@gmail.com.',
+      'versions.0.6.4.title': 'A feedback address',
+      'versions.0.6.4.date': '2026-11-02',
+      'versions.0.6.4.items': 'The README and the changelog tab now carry softwarewxw@gmail.com, so feedback, station quirks and feature ideas have an address; behaviour is unchanged',
       'versions.0.6.3.title': 'No external-build references',
       'versions.0.6.3.date': '2026-11-02',
       'versions.0.6.3.items': 'The changelog and the README no longer mention a comparable desktop client, and describe only what this plugin does and who it targets; behaviour is unchanged',
@@ -2581,6 +2587,11 @@ window.__ModuleLoader__.load({
     function VersionsTab(props) {
       const t = props.t;
       const history = [{
+        version: '0.6.4',
+        date: t('versions.0.6.4.date'),
+        title: t('versions.0.6.4.title'),
+        items: t('versions.0.6.4.items'),
+      }, {
         version: '0.6.3',
         date: t('versions.0.6.3.date'),
         title: t('versions.0.6.3.title'),

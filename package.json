@@ -1,6 +1,6 @@
 {
   "name": "dsh-ai-quota",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "license": "MIT",
   "description": "New API 中转站额度面板：额度概览、模型限制、调用记录、模型计费、调用分析，以及按官方价目估算的用量价值与配额外推；侧边栏显示剩余额度百分比，显示名称可配置",
   "keywords": [
@@ -14,6 +14,13 @@
     "api-gateway",
     "quota"
   ],
+  "author": "solomonwu <softwarewxw@gmail.com>",
+  "contributors": [
+    "solomonwu <softwarewxw@gmail.com>"
+  ],
+  "bugs": {
+    "email": "softwarewxw@gmail.com"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hustwxw/dsh-ai-quota.git"

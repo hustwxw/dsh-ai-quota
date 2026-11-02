@@ -4,6 +4,11 @@
 
 An AI quota panel — a Cordis plugin for **DeepSeek Harness (DSH)**.
 
+> ✉️ **Feedback and discussion**: **softwarewxw@gmail.com**
+> Anything that feels off, a feature you want, a relay station whose endpoints differ, or a patch you would
+> like to contribute — just email. Include the **plugin version, your station type (New API / one-api /
+> self-hosted) and a screenshot or the raw error**, and it saves a round trip.
+
 ---
 
 ## ⚡ One-paste install: hand the block below to your DSH
